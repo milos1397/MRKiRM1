@@ -31,7 +31,7 @@ public:
 	void FSM_Cl_Connecting_Cl_Connectiong_Accept();
 	void FSM_Cl_Authorising_User_Name_Password();
 	void FSM_Cl_User_Check_MSG();
-	//void FSM_Cl_Pass_Check_MSG();
+	void FSM_Cl_Pass_Check_MSG();
 	//void FSM_Cl_Options_Show();
 
 	void Start();

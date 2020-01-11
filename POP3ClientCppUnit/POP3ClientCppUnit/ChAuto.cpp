@@ -152,6 +152,7 @@ void ChAuto::FSM_Ch_Connecting_Sock_Connection_Acccept(){
 }
 void ChAuto::FSM_Ch_Connected_Cl_MSG(){
 
+	printf("usao u slanje");
 	char* data = new char[255];
 	uint8* buffer = GetParam(PARAM_DATA);
 	uint16 size = buffer[2];
@@ -206,9 +207,9 @@ DWORD ChAuto::ClientListener(LPVOID param) {
 		pParent->FSM_Ch_Connecting_Sock_Connection_Acccept();
 		
 		/* Receive data from the network until the socket is closed. */ 
-		/*do {
+		do {
 			nReceivedBytes = recv(pParent->m_Socket, buffer, 255, 0);
-			if (nReceivedBytes == 0)
+			/*if (nReceivedBytes == 0)
 			{
 				printf("Disconnected from server!\n");
 				//pParent->FSM_Ch_Connected_Sock_Disconected();
@@ -218,12 +219,12 @@ DWORD ChAuto::ClientListener(LPVOID param) {
 				printf("error\n");
 				DWORD err = WSAGetLastError();
 				break;
-			}
+			}*/
 			pParent->NetMsg_2_FSMMsg(buffer, nReceivedBytes);
 
 			Sleep(1000); 
 			
-		} while(1);*/
+		} while(1);
 
 	}
 
