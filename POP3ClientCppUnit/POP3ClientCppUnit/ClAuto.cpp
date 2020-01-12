@@ -225,12 +225,27 @@ void ClAuto::FSM_Cl_Options_Show(){
 		command = 2;
 		char l_Command[20] = "2 ";
 
-		strcpy(l_Command+2,m_UserName);
+		char numb[4];
+		printf("\nEnter the oarder number of the message you want to receive: ");
+		scanf("%s",&numb);
+
+		strcpy(l_Command+2,numb);
+
+		//strcpy(l_Command+2+3,m_UserName);
 
 		PrepareNewMessage(0x00, MSG_Cl_MSG);
 		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
 		SetMsgObjectNumberTo(0);
 		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
+		SendMessage(CH_AUTOMATE_MBX_ID);
+
+
+
+		//posalji usera
+		PrepareNewMessage(0x00, MSG_Cl_MSG);
+		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		AddParam(PARAM_DATA,strlen(m_UserName),(uint8*)m_UserName);
 		SendMessage(CH_AUTOMATE_MBX_ID);
 	}else 
 	{
