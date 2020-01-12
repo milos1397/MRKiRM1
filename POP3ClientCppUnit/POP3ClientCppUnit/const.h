@@ -38,6 +38,7 @@ const uint16 MSG_Cl_Connection_Accept	= 0x000b;
 const uint16 MSG_User_Name_Password		= 0x000c;
 const uint16 MSG_MSG					= 0x000d;
 const uint16 MSG_Cl_Disconected			= 0x000f;
+const uint16 MSG_Option					= 0x0011;
 
 
 #define ADRESS "localhost"

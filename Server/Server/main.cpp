@@ -8,11 +8,121 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+void check_opt(char* message,int received_bytes,int socket)
+{
+	FILE *fptr;
+	char *file = new char[received_bytes-2+4]; //2 karaktera za 1 i 4 za .txt
+	strcpy(file,message+2);
+	strcpy(file+strlen(message)-2,".txt");
+	fptr = fopen(file,"r");
+	
+	if(fptr==NULL)
+	{
+		printf("Unable to open file\n");
+	}else
+	{
+		int bufferLength = 255;
+		char buffer[255];
+
+		fgets(buffer, bufferLength, fptr);
+
+		while(fgets(buffer, bufferLength, fptr)!=NULL) 
+		{
+			if(buffer[0]!='\n')
+			{
+				printf("%s",buffer);
+				if (send(socket, buffer,strlen(buffer), 0) != strlen(buffer)) 
+				{
+							//delete [] data;
+					printf("neuspeh");
+				} else 
+				{
+					printf("SENT: %s ",buffer);
+							//delete [] data;		
+				} 
+				Sleep(100); //da bi mogao odvojeno da posalje, odnosno da bi na prijemu se regularno primilo
+			}
+		}
+		//oznaka za kraj slanja
+		Sleep(900);
+		char* end;
+		end = "xxx\0";
+		if (send(socket,end,strlen(end), 0) != strlen(end)) 
+		{
+					//delete [] data;
+			printf("neuspeh");
+		} else 
+		{
+			printf("SENT: %s",end);
+					//delete [] data;		
+		} 
+		fclose(fptr);
+	}
+
+}
+
+void rcv_opt(char* message,int received_bytes,int socket)
+{
+	//char li
+
+
+	FILE *fptr;
+	char *file = new char[received_bytes-2+4]; //2 karaktera za 1 i 4 za .txt
+	strcpy(file,message+2);
+	strcpy(file+strlen(message)-2,".txt");
+	fptr = fopen(file,"r");
+
+	
+	if(fptr==NULL)
+	{
+		printf("Unable to open file\n");
+	}else
+	{
+		int bufferLength = 255;
+		char buffer[255];
+
+		fgets(buffer, bufferLength, fptr);
+
+		while(fgets(buffer, bufferLength, fptr)!=NULL) 
+		{
+			if(buffer[0]!='\n')
+			{
+				printf("%s",buffer);
+				if (send(socket, buffer,strlen(buffer), 0) != strlen(buffer)) 
+				{
+							//delete [] data;
+					printf("neuspeh");
+				} else 
+				{
+					printf("SENT: %s ",buffer);
+							//delete [] data;		
+				} 
+				Sleep(100); //da bi mogao odvojeno da posalje, odnosno da bi na prijemu se regularno primilo
+			}
+		}
+		//oznaka za kraj slanja
+		Sleep(900);
+		char* end;
+		end = "xxx\0";
+		if (send(socket,end,strlen(end), 0) != strlen(end)) 
+		{
+					//delete [] data;
+			printf("neuspeh");
+		} else 
+		{
+			printf("SENT: %s",end);
+					//delete [] data;		
+		} 
+		fclose(fptr);
+	}
+}
+
 void check_message(char* message,int received_bytes,int socket)
 {
 			//za ove provere bih mogao jos jednu funkciju da napravim, da bude modularnije jer ce u suprtonom biti ogromna
-		if(message[0]=='u' && message[1]=='s' && message[2]=='e' && message[3]=='r')
+		if(strncmp(message,"user",4)==0)
 		{
+			//ovo bih sve mogao u jednu funkciju
 			FILE *fptr;
 		   // use appropriate location if you are using MacOS or Linux
 			char* file = new char[received_bytes+4];
@@ -60,17 +170,35 @@ void check_message(char* message,int received_bytes,int socket)
 					printf("%s\n",buffer);
 					printf("%s\n",password);
 
-					printf("%d",strlen(buffer));
 					if(strncmp(buffer,password,strlen(buffer)-1)==0)
 					{
-						printf("Dobra sifra");
+						char* correct = "+";
+						if (send(socket, correct,sizeof(correct), 0) != sizeof(correct)) {
+							//delete [] data;
+						} else {
+							printf("SENT: %s ",correct);
+							//delete [] data;
+						} 
 					}else
 					{
-						printf("Nije dobra sifra");
+						char* incorrect = "-";
+						if (send(socket, incorrect,sizeof(incorrect), 0) != sizeof(incorrect)) {
+							//delete [] data;
+						} else {
+							//nesto
+						}
 					}
 				}
 				fclose(fptr);
 			}
+		}else if(strncmp(message,"1 ",2)==0)
+		{
+			printf("Usao u 1");
+			check_opt(message,received_bytes,socket);
+		}else if(strncmp(message,"2 ",2)==0)
+		{
+			printf("Usao u 2");
+			rcv_opt(message,received_bytes,socket);
 		}
 		return;
 }

@@ -32,13 +32,16 @@ public:
 	void FSM_Cl_Authorising_User_Name_Password();
 	void FSM_Cl_User_Check_MSG();
 	void FSM_Cl_Pass_Check_MSG();
-	//void FSM_Cl_Options_Show();
+	void FSM_Cl_Options_Show();
+	void FSM_Cl_Receive();
 
 	void Start();
 
 protected:
 	char m_UserName[20];
 	char m_Password[20];
+	int command;
+	int msg_num;
 };
 
 

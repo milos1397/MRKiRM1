@@ -56,8 +56,9 @@ void ClAuto::Initialize() {
 	InitEventProc(FSM_Cl_Connecting, MSG_Cl_Connection_Accept, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Connecting_Cl_Connectiong_Accept );
 	InitEventProc(FSM_Cl_Authorising, MSG_User_Name_Password, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Authorising_User_Name_Password );
 	InitEventProc(FSM_Cl_User_Check, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSM_Cl_User_Check_MSG );
-	//InitEventProc(FSM_Cl_Pass_Check, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Pass_Check_MSG );
-	//InitEventProc(FSM_Cl_Options, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Options_Show);	
+	InitEventProc(FSM_Cl_Pass_Check, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Pass_Check_MSG );
+	InitEventProc(FSM_Cl_Options, MSG_Option, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Options_Show);
+	InitEventProc(FSM_Cl_Options, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Receive);	
 }
 
 void ClAuto::FSM_Cl_Ready_User_Check_Mail(){
@@ -117,7 +118,7 @@ void ClAuto::FSM_Cl_User_Check_MSG(){
 
 	memcpy(data,buffer + 4,size);
 	data[size]=0;
-	printf("%s",data);
+	//printf("%s",data);
 	if( data[0] == '+' )
 	{
 		printf("Enter password: ");
@@ -132,7 +133,6 @@ void ClAuto::FSM_Cl_User_Check_MSG(){
 		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
 		SendMessage(CH_AUTOMATE_MBX_ID);
 		
-		//while(1);
 		SetState(FSM_Cl_Pass_Check);
 	}
 	else{
@@ -148,27 +148,32 @@ void ClAuto::FSM_Cl_User_Check_MSG(){
 
 void ClAuto::FSM_Cl_Pass_Check_MSG(){
 	
-	while(1);
 	char* data = new char[255];
 	uint8* buffer = GetParam(PARAM_DATA);
 	uint16 size = buffer[2];
 
 	memcpy(data,buffer + 4,size);
 	data[size]=0;
-	printf("%s",data);
+	//printf("%s",data);
 
 	if( data[0] == '+' )
 	{
-		char l_Command[20] = "stat\r\n";
+		/*char l_Command[20] = "stat\r\n";
+		
 
 		PrepareNewMessage(0x00, MSG_Cl_MSG);
 		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
 		SetMsgObjectNumberTo(0);
 		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
-		SendMessage(CH_AUTOMATE_MBX_ID);
+		SendMessage(CH_AUTOMATE_MBX_ID);*/
 		
 		//SetState(FSM_Cl_Pass_Check);
         SetState(FSM_Cl_Options);
+
+		PrepareNewMessage(0x00, MSG_Option);
+		SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		SendMessage(CL_AUTOMATE_MBX_ID);
 	}
 	else{
 		//vraca se u authorising, ako ne unese dobru sifru
@@ -179,10 +184,94 @@ void ClAuto::FSM_Cl_Pass_Check_MSG(){
 		SetMsgObjectNumberTo(0);
 		SendMessage(CL_AUTOMATE_MBX_ID);
 	}
-
-	//SetState(FSM_Cl_Mail_Check);//CHK
 }
 
+void ClAuto::FSM_Cl_Options_Show(){
+	printf("Options: \n");
+	printf("1.Check messages\n");
+	printf("2.Receive message\n");
+	printf("3.Send message\n");
+	printf("4.Logout \n");
+	msg_num = 0;
+	char opt;
+	do{
+		printf("Enter your option[1-4]: ");
+		scanf(" %c", &opt);
+	}while(opt=='0' || opt>'4');
+
+	if(opt=='4')
+	{
+		SetState(FSM_Cl_Authorising);
+
+		PrepareNewMessage(0x00, MSG_User_Name_Password);
+		SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		SendMessage(CL_AUTOMATE_MBX_ID);
+	}else if(opt=='1')
+	{
+		command = 1;
+		char l_Command[20] = "1 ";
+
+		strcpy(l_Command+2,m_UserName);
+
+		PrepareNewMessage(0x00, MSG_Cl_MSG);
+		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
+		SendMessage(CH_AUTOMATE_MBX_ID);
+
+	}else if(opt=='2')
+	{
+		command = 2;
+		char l_Command[20] = "2 ";
+
+		strcpy(l_Command+2,m_UserName);
+
+		PrepareNewMessage(0x00, MSG_Cl_MSG);
+		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
+		SendMessage(CH_AUTOMATE_MBX_ID);
+	}else 
+	{
+		command = 3;
+		char l_Command[20] = "3 ";
+
+		PrepareNewMessage(0x00, MSG_Cl_MSG);
+		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
+		SendMessage(CH_AUTOMATE_MBX_ID);
+	}
+	//while(1);
+}
+
+
+void ClAuto::FSM_Cl_Receive()
+{
+
+	if(command == 1)
+	{
+		char data[255];
+		uint8* buffer = GetParam(PARAM_DATA);
+		uint16 size = buffer[2];
+
+		memcpy(data,buffer + 4,size);
+		data[size]=0;
+		//ako je kraj poruka onda izbaci options
+		if(strncmp(data,"xxx",3)==0)
+		{
+			PrepareNewMessage(0x00, MSG_Option);
+			SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+			SetMsgObjectNumberTo(0);
+			SendMessage(CL_AUTOMATE_MBX_ID);
+		}else//ako nije kraj samo printaj
+		{
+			msg_num++;
+			printf("%d. %s",msg_num,data);
+		}
+	}
+}
 void ClAuto::Start(){
 	PrepareNewMessage(0x00, MSG_User_Check_Mail);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);

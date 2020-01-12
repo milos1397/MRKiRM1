@@ -152,7 +152,7 @@ void ChAuto::FSM_Ch_Connecting_Sock_Connection_Acccept(){
 }
 void ChAuto::FSM_Ch_Connected_Cl_MSG(){
 
-	printf("usao u slanje");
+	//printf("usao u slanje");
 	char* data = new char[255];
 	uint8* buffer = GetParam(PARAM_DATA);
 	uint16 size = buffer[2];
@@ -163,7 +163,7 @@ void ChAuto::FSM_Ch_Connected_Cl_MSG(){
 	if (send(m_Socket, data, size, 0) != size) {
 		delete [] data;
 	} else {
-		printf("SENT: %s",data);
+		//printf("SENT: %s",data);
 		delete [] data;
 	}
 
@@ -185,6 +185,7 @@ void ChAuto::FSM_Ch_Connected_Sock_Disconected(){
 
 void ChAuto::NetMsg_2_FSMMsg(const char* apBuffer, uint16 anBufferLength) {
 	
+	//printf("Poslao:");
 	PrepareNewMessage(0x00, MSG_MSG);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
 	SetMsgObjectNumberTo(0);
@@ -222,7 +223,7 @@ DWORD ChAuto::ClientListener(LPVOID param) {
 			}*/
 			pParent->NetMsg_2_FSMMsg(buffer, nReceivedBytes);
 
-			Sleep(1000); 
+			Sleep(100); 
 			
 		} while(1);
 
