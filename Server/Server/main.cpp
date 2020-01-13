@@ -66,24 +66,24 @@ void rcv_opt(char* message,int received_bytes,int socket)
 	char* line_numb = new char[3];
 	strcpy(line_numb,message+2);
 	
-	printf("%s",line_numb);
+	//printf("%s",line_numb);
 	char* end;
 	long int result = strtol(line_numb, &end, 10);
-	printf("br_lini %d \n", result);
+	//printf("br_lini %d \n", result);
 
 	//while(1);
 
 	char user[255];
 	int recbyts=recv(socket , user , sizeof(user) , 0);
 	user[recbyts]='\0';
-	printf("Cela poruka: %s",user);
+	//printf("Cela poruka: %s",user);
 
 
 	FILE *fptr;
 	char *file = new char[recbyts]; //2 karaktera za 1 i 4 za .txt i 3 za broj
 	strcpy(file,user);
 	strcpy(file+received_bytes+1,".txt"); //isto kao gore
-	printf("file %s",file);
+	//printf("file %s",file);
 	fptr = fopen(file,"r");
 
 	
@@ -97,8 +97,24 @@ void rcv_opt(char* message,int received_bytes,int socket)
 
 		//fgets(buffer, bufferLength, fptr);
 		printf("Otvorio fajl ");
-		while(1);
-		while(fgets(buffer, bufferLength, fptr)!=NULL) 
+		printf("Br linije %d ", result);
+		//while(1);
+		int i;
+		for(i = 0;i <= result; i++)
+		{
+			fgets(buffer, bufferLength, fptr);
+		}
+		//fprintf(fptr,"Nes");
+
+		printf("\n Bafer %s", buffer);
+		if (send(socket, buffer,strlen(buffer), 0) != strlen(buffer)) 
+		{
+			printf("neuspeh");
+		} else 
+		{
+			printf("SENT: %s ",buffer);	
+		} 
+		/*while(fgets(buffer, bufferLength, fptr)!=NULL) 
 		{
 			if(buffer[0]!='\n')
 			{
@@ -114,9 +130,9 @@ void rcv_opt(char* message,int received_bytes,int socket)
 				} 
 				Sleep(100); //da bi mogao odvojeno da posalje, odnosno da bi na prijemu se regularno primilo
 			}
-		}
+		}*/
 		//oznaka za kraj slanja
-		Sleep(900);
+		/*Sleep(900);
 		char* end;
 		end = "xxx\0";
 		if (send(socket,end,strlen(end), 0) != strlen(end)) 
@@ -127,7 +143,7 @@ void rcv_opt(char* message,int received_bytes,int socket)
 		{
 			printf("SENT: %s",end);
 					//delete [] data;		
-		} 
+		} */
 		fclose(fptr);
 	}
 }

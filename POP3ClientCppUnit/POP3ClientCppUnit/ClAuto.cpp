@@ -226,7 +226,7 @@ void ClAuto::FSM_Cl_Options_Show(){
 		char l_Command[20] = "2 ";
 
 		char numb[4];
-		printf("\nEnter the oarder number of the message you want to receive: ");
+		printf("\nEnter the order number of the message you want to receive: ");
 		scanf("%s",&numb);
 
 		strcpy(l_Command+2,numb);
@@ -264,17 +264,17 @@ void ClAuto::FSM_Cl_Options_Show(){
 
 void ClAuto::FSM_Cl_Receive()
 {
+	char data[255];
+	uint8* buffer = GetParam(PARAM_DATA);
+	uint16 size = buffer[2];
+
+	memcpy(data,buffer + 4,size);
+	data[size]=0;
 
 	if(command == 1)
 	{
-		char data[255];
-		uint8* buffer = GetParam(PARAM_DATA);
-		uint16 size = buffer[2];
-
-		memcpy(data,buffer + 4,size);
-		data[size]=0;
 		//ako je kraj poruka onda izbaci options
-		if(strncmp(data,"xxx",3)==0)
+		if(strncmp(data,"xxx",3) == 0)
 		{
 			PrepareNewMessage(0x00, MSG_Option);
 			SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -284,6 +284,26 @@ void ClAuto::FSM_Cl_Receive()
 		{
 			msg_num++;
 			printf("%d. %s",msg_num,data);
+		}
+	}else if(command == 2)
+	{
+		printf("\nPrimio poruku: %s", data);
+		FILE* fptr;
+
+		fptr = fopen("Msg.txt","a");
+	
+		if(fptr == NULL)
+		{
+			printf("Unable to open file\n");
+		}else
+		{
+			fprintf(fptr,data);
+
+			PrepareNewMessage(0x00, MSG_Option);
+			SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+			SetMsgObjectNumberTo(0);
+			SendMessage(CL_AUTOMATE_MBX_ID);
+			fclose(fptr);
 		}
 	}
 }
