@@ -179,41 +179,49 @@ void sendOpt(char* message, int receivedBytes, int socket)
 	printf(" %s", message);
 }
 
-void checkMessage(char* message, int receivedBytes, int socket)
+void userCheck(char* message, int receivedBytes, int socket)
 {
-			//za ove provere bih mogao jos jednu funkciju da napravim, da bude modularnije jer ce u suprtonom biti ogromna
-		if(strncmp(message,"user",4)==0)
-		{
-			//ovo bih sve mogao u jednu funkciju
-			FILE *fptr;
-			char* file = new char[receivedBytes + 12]; //8 za Clients/ i 4 za .txt
-			strcpy(file, "Clients/");
-			strcpy(file + strlen(file), message + 5);
-			strcpy(file + strlen(file), ".txt");
+		FILE *fptr;
+		char* file = new char[receivedBytes + 12]; //8 za Clients/ i 4 za .txt
+		strcpy(file, "Clients/");
+		strcpy(file + strlen(file), message + 5);
+		strcpy(file + strlen(file), ".txt");
 
-			fptr = fopen(file, "r");
-			if(fptr == NULL)
-		    {
-				char* incorrect = "-";
-				if (send(socket, incorrect,sizeof(incorrect), 0) != sizeof(incorrect)) {
-					//delete [] data;
-				} else {
-					printf("SENT: %s ",incorrect);
-					//delete [] data;
-				}           
-		    }
-			else
+		fptr = fopen(file, "r");
+		if(fptr == NULL)
+		{
+			char* incorrect = "-";
+			if (send(socket, incorrect,sizeof(incorrect), 0) != sizeof(incorrect)) {
+				//delete [] data;
+			} else {
+				printf("SENT: %s ",incorrect);
+				//delete [] data;
+			}           
+		}
+		else
+		{
+			char* correct = "+";
+			if (send(socket, correct,sizeof(correct), 0) != sizeof(correct)) {
+				//delete [] data;
+			} else 
 			{
-				char* correct = "+";
-				if (send(socket, correct,sizeof(correct), 0) != sizeof(correct)) {
-					//delete [] data;
-				} else {
-					printf("SENT: %s\n",correct);
-					printf("Waiting for the password...\n");
-					//wait for the passwrod
-					int recbyts;
-					char received[20];
-					recbyts = recv(socket , received , sizeof(received) , 0);
+				printf("SENT: %s\n",correct);
+				printf("Waiting for the password...\n");
+				//wait for the password
+				int recbyts;
+				char received[20];
+			
+				recbyts = recv(socket , received , sizeof(received) , 0);
+				if (recbyts == 0)
+				{
+					printf("Disconnected from server!\n");
+				}else if (recbyts < 0) 
+				{
+					printf("error\n");
+					DWORD err = WSAGetLastError();
+				}else
+				{
+
 					received[recbyts] = '\0';
 					printf("Primio %s \n", received);
 
@@ -228,7 +236,9 @@ void checkMessage(char* message, int receivedBytes, int socket)
 					printf("%s\n", buffer);
 					printf("%s\n", password);
 
-					if(strncmp(buffer, password, strlen(buffer) - 1) == 0)
+					//moram i duzinu porediti, jer da nisam poredio u slucaju kada bi mi korisnik uneo duzu sifru
+					//ali sa istim pocetkom, sve bi bilo ok
+					if(strncmp(buffer, password, strlen(buffer)-1) == 0 && ((strlen(buffer) - 1) == strlen(password)))
 					{
 						char* correct = "+";
 						if (send(socket, correct,sizeof(correct), 0) != sizeof(correct)) {
@@ -242,13 +252,25 @@ void checkMessage(char* message, int receivedBytes, int socket)
 						char* incorrect = "-";
 						if (send(socket, incorrect,sizeof(incorrect), 0) != sizeof(incorrect)) {
 							//delete [] data;
-						} else {
+						} else 
+						{
 							//nesto
 						}
 					}
 				}
-				fclose(fptr);
 			}
+			fclose(fptr);
+		}
+	return;
+}
+
+void checkMessage(char* message, int receivedBytes, int socket)
+{
+			//za ove provere bih mogao jos jednu funkciju da napravim, da bude modularnije jer ce u suprtonom biti ogromna
+		if(strncmp(message, "user", 4) == 0)
+		{
+			//ovo bih sve mogao u jednu funkciju
+			userCheck(message,receivedBytes,socket);
 		}else if(strncmp(message, "1 ", 2) == 0)
 		{
 			//printf("Usao u 1");
@@ -271,31 +293,34 @@ DWORD WINAPI socketThread(LPVOID arg)
 	char clientMessage[200];
 	int socket = *( (int*) arg);
 	char *data = "ACK";
-	if (send(socket, data, sizeof(data), 0) != sizeof(data)) {
+
+	if (send(socket, data, sizeof(data), 0) != sizeof(data)) 
+	{
 		//delete [] data;
-	} else {
+	} else 
+	{
 		printf("SENT: %s ",data);
 		//delete [] data;
 	}
-	do{
+	do
+	{
 		nReceivedBytes = recv(socket , clientMessage , sizeof(clientMessage) , 0);
-		clientMessage[nReceivedBytes] = '\0';
-		printf("Primio %s \n", clientMessage);
 		if (nReceivedBytes == 0)
 		{
 			printf("Disconnected from server!\n");
 			break;
-		}
-		if (nReceivedBytes < 0) {
+		}else if (nReceivedBytes < 0) 
+		{
 			printf("error\n");
 			DWORD err = WSAGetLastError();
 			break;
+		}else
+		{
+			clientMessage[nReceivedBytes] = '\0';
+			printf("Primio %s \n", clientMessage);
+			checkMessage(clientMessage, nReceivedBytes, socket);
 		}
-
-		checkMessage(clientMessage, nReceivedBytes, socket);
-
-	} while(1);
-	while(1);
+	}while(1);
 	return 0;	
 }
 
@@ -352,14 +377,15 @@ int main(int argc , char *argv[])
 	{
 		puts("Connection accepted");
 		
-        if( CreateThread(NULL, 0, socketThread, (LPVOID)&newSocket, 0, &tid[i]) != NULL )
-           printf("Failed to create thread\n");
+        if( CreateThread(NULL, 0, socketThread, (LPVOID)&newSocket, 0, &tid[i]) == NULL )
+			printf("Failed to create thread\n");
         if( i >= 50)
         {
           i = 0;
           while(i < 50)
           {
             //pthread_join(tid[i++],NULL);
+			//  CloseHandle()
           }
           i = 0;
         }
