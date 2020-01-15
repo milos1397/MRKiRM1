@@ -1,5 +1,5 @@
 
-#include <pthread.h>
+//#include <pthread.h>
 #include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -11,7 +11,7 @@
 void check_opt(char* message,int received_bytes,int socket)
 {
 	FILE *fptr;
-	char *file = new char[received_bytes-2+4]; //2 karaktera za 1 i 4 za .txt
+	char *file = new char[received_bytes-2+4+1]; //2 karaktera za 1 i 4 za .txt
 	strcpy(file,message+2);
 	strcpy(file+strlen(message)-2,".txt");
 	fptr = fopen(file,"r");
@@ -58,6 +58,7 @@ void check_opt(char* message,int received_bytes,int socket)
 		} 
 		fclose(fptr);
 	}
+	delete file;
 
 }
 
@@ -80,7 +81,7 @@ void rcv_opt(char* message,int received_bytes,int socket)
 
 
 	FILE *fptr;
-	char *file = new char[recbyts]; //2 karaktera za 1 i 4 za .txt i 3 za broj
+	char *file = new char[recbyts+6]; //2 karaktera za 1 i 4 za .txt i 3 za broj
 	strcpy(file,user);
 	strcpy(file+received_bytes+1,".txt"); //isto kao gore
 	//printf("file %s",file);
@@ -92,17 +93,44 @@ void rcv_opt(char* message,int received_bytes,int socket)
 		printf("Unable to open file\n");
 	}else
 	{
-		int bufferLength = 255;
+		//int bufferLength = 255;
+		printf("NIZ PRAVI");
 		char buffer[255];
+		if(buffer == NULL){
+			printf("nl");
+		}
+		//while(1);
+		//buffer[254]='\0';
 
 		//fgets(buffer, bufferLength, fptr);
 		printf("Otvorio fajl ");
 		printf("Br linije %d ", result);
 		//while(1);
 		int i;
-		for(i = 0;i <= result; i++)
+		/*for(i = 0;i <= result; i++)
 		{
+			printf("\n i: %d ",i);
 			fgets(buffer, bufferLength, fptr);
+		}*/
+		int count = 1;
+		//memset(buffer,0, 255);
+		//printf("Bafercic : %s", buffer);
+		fgets(buffer, 255, fptr);
+		printf("Odradi jednom");
+		while (fgets(buffer, 255, fptr) != NULL) /* read a line */
+		{
+			if (count == result)
+			{
+				//use line or in a function return it
+				//in case of a return first close the file with "fclose(file);"
+				fclose(fptr);
+				break;
+			}
+			else
+			{
+				count++;
+			}
+			Sleep(100);
 		}
 		//fprintf(fptr,"Nes");
 
@@ -146,6 +174,33 @@ void rcv_opt(char* message,int received_bytes,int socket)
 		} */
 		fclose(fptr);
 	}
+}
+
+void send_opt(char* message,int received_bytes,int socket)
+{
+	FILE* fptr;
+	char* file = new char[received_bytes - 2 + 4 + 1]; //2 za komandu, 4 za.txt i jedan za termination
+	strcpy(file,message+2);
+	strcpy(file+strlen(message)-2,".txt");
+	printf("Fajll %s", file);
+	fptr = fopen(file,"a");
+	
+	if(fptr==NULL)
+	{
+		printf("Unable to open file\n");
+	}else
+	{
+			char msg[200];
+			int rec_byt;
+			rec_byt = recv(socket , msg , sizeof(msg) , 0);
+			msg[rec_byt]= 0;
+			fprintf(fptr,msg);
+			fclose(fptr);
+			while(1);
+	}
+	int i;
+	printf(" %s", message);
+	while(1);
 }
 
 void check_message(char* message,int received_bytes,int socket)
@@ -230,14 +285,18 @@ void check_message(char* message,int received_bytes,int socket)
 		{
 			printf("Usao u 2");
 			rcv_opt(message,received_bytes,socket);
+		}else if(strncmp(message,"3 ",2)==0)
+		{
+			printf("Usao u 3");
+			send_opt(message,received_bytes,socket);
 		}
 		return;
 }
 
-void * socket_Thread(void * arg)
+DWORD WINAPI socket_Thread(LPVOID arg)
 {
 	int nReceivedBytes;
-	char client_message[20];
+	char client_message[200];
 	printf("U niti sam\n");
 	int socket = *((int*)arg);
 	char *data = "ACK";
@@ -318,7 +377,7 @@ int main(int argc , char *argv[])
 	
 	c = sizeof(struct sockaddr_in);
 	
-    pthread_t tid[60];
+    DWORD tid[60];
     int i = 0;
 	while( (new_socket = accept(s , (struct sockaddr *)&client, &c)) != INVALID_SOCKET )
 	{
@@ -331,14 +390,15 @@ int main(int argc , char *argv[])
 
         //for each client request creates a thread and assign the client request to it to process
        //so the main thread can entertain next request
-        if( pthread_create(&tid[i], NULL, socket_Thread, &new_socket) != 0 )
+		//CreateThread(NULL, 0, socket_Thread, (LPVOID)&new_socket, 0, &tid[i]); 
+        if( CreateThread(NULL, 0, socket_Thread, (LPVOID)&new_socket, 0, &tid[i]) != NULL )
            printf("Failed to create thread\n");
         if( i >= 50)
         {
           i = 0;
           while(i < 50)
           {
-            pthread_join(tid[i++],NULL);
+            //pthread_join(tid[i++],NULL);
           }
           i = 0;
         }

@@ -41,8 +41,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\student.DOMAIN\Desktop\MRKiRM1\Pre-built.2\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\student.DOMAIN\Desktop\MRKiRM1\Pre-built.2\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -59,7 +59,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>winmm.lib;ws2_32.lib;cppunitd.lib;C:\Users\student.DOMAIN\Desktop\MRKiRM1\Pre-built.2\lib\x86\pthreadVC2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;ws2_32.lib;cppunitd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
       <AdditionalLibraryDirectories>..\Kernel;..\CppUnit_1.12.1\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

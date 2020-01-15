@@ -250,12 +250,38 @@ void ClAuto::FSM_Cl_Options_Show(){
 	}else 
 	{
 		command = 3;
-		char l_Command[20] = "3 ";
+		char l_Command[200] = "3 ";
+		char contact[20];
+		char msg[100];
+		char by[5] = " by ";
 
+
+		printf("\nSend to: ");
+		scanf("%s", &contact);
+
+		printf("\nMessage: ");
+		scanf(" %[^\n]s",msg);
+
+		
+		strcpy(l_Command+2,contact);
+
+		//prvo posaljem samo primalaca
 		PrepareNewMessage(0x00, MSG_Cl_MSG);
 		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
 		SetMsgObjectNumberTo(0);
 		AddParam(PARAM_DATA,strlen(l_Command),(uint8*)l_Command);
+		SendMessage(CH_AUTOMATE_MBX_ID);
+
+		//posalje poruku i posiljaoca
+		strcpy(msg+strlen(msg),by);
+		strcpy(msg+strlen(msg),m_UserName);
+		strcpy(msg+strlen(msg),"\n");
+		printf(" %s",msg);
+
+		PrepareNewMessage(0x00, MSG_Cl_MSG);
+		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
+		SetMsgObjectNumberTo(0);
+		AddParam(PARAM_DATA,strlen(msg),(uint8*)msg);
 		SendMessage(CH_AUTOMATE_MBX_ID);
 	}
 	//while(1);
