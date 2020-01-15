@@ -8,15 +8,16 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-void check_opt(char* message,int received_bytes,int socket)
+void checkOpt(char* message, int receivedBytes, int socket)
 {
 	FILE *fptr;
-	char *file = new char[received_bytes-2+4+1]; //2 karaktera za 1 i 4 za .txt
-	strcpy(file,message+2);
-	strcpy(file+strlen(message)-2,".txt");
+	char *file = new char[receivedBytes - 2 + 12 + 1]; //2 karaktera za 1 i 4 za .txt I 8 za Clients/, 1 jos mora da se doda
+	strcpy(file, "Clients/");
+	strcpy(file + strlen(file), message + 2);
+	strcpy(file + strlen(file),".txt");
 	fptr = fopen(file,"r");
 	
-	if(fptr==NULL)
+	if(fptr == NULL)
 	{
 		printf("Unable to open file\n");
 	}else
@@ -28,9 +29,9 @@ void check_opt(char* message,int received_bytes,int socket)
 
 		while(fgets(buffer, bufferLength, fptr)!=NULL) 
 		{
-			if(buffer[0]!='\n')
+			if(buffer[0] != '\n')
 			{
-				printf("%s",buffer);
+				printf("%s", buffer);
 				if (send(socket, buffer,strlen(buffer), 0) != strlen(buffer)) 
 				{
 							//delete [] data;
@@ -47,7 +48,7 @@ void check_opt(char* message,int received_bytes,int socket)
 		Sleep(900);
 		char* end;
 		end = "xxx\0";
-		if (send(socket,end,strlen(end), 0) != strlen(end)) 
+		if (send(socket, end, strlen(end), 0) != strlen(end)) 
 		{
 					//delete [] data;
 			printf("neuspeh");
@@ -62,67 +63,52 @@ void check_opt(char* message,int received_bytes,int socket)
 
 }
 
-void rcv_opt(char* message,int received_bytes,int socket)
+void rcvOpt(char* message, int receivedBytes, int socket)
 {
-	char* line_numb = new char[3];
-	strcpy(line_numb,message+2);
+	//broj linije koju zelim da primim
+	char* lineNumb = new char[3];
+	strcpy(lineNumb, message + 2);
 	
-	//printf("%s",line_numb);
+	//pretvorim je u broj
 	char* end;
-	long int result = strtol(line_numb, &end, 10);
-	//printf("br_lini %d \n", result);
+	long int result = strtol(lineNumb, &end, 10);
 
-	//while(1);
+	//primim user-a, da bih znao koji fajl da otvorim i procitam tu liniju
+	char user[20];
+	int recbyts = recv(socket , user , sizeof(user) , 0);
+	user[recbyts] = '\0';
 
-	char user[255];
-	int recbyts=recv(socket , user , sizeof(user) , 0);
-	user[recbyts]='\0';
-	//printf("Cela poruka: %s",user);
-
-
+	//otvaram fajl
 	FILE *fptr;
-	char *file = new char[recbyts+6]; //2 karaktera za 1 i 4 za .txt i 3 za broj
-	strcpy(file,user);
-	strcpy(file+received_bytes+1,".txt"); //isto kao gore
-	//printf("file %s",file);
+	char *file = new char[recbyts + 12]; //8 za Clients\ i 4 za .txt
+	strcpy(file, "Clients/");
+	strcpy(file + strlen(file), user);
+	strcpy(file + strlen(file), ".txt"); 
+
 	fptr = fopen(file,"r");
 
-	
+	delete [] file;
+
 	if(fptr==NULL)
 	{
 		printf("Unable to open file\n");
 	}else
 	{
-		//int bufferLength = 255;
-		printf("NIZ PRAVI");
 		char buffer[255];
 		if(buffer == NULL){
 			printf("nl");
 		}
-		//while(1);
-		//buffer[254]='\0';
 
-		//fgets(buffer, bufferLength, fptr);
 		printf("Otvorio fajl ");
 		printf("Br linije %d ", result);
-		//while(1);
-		int i;
-		/*for(i = 0;i <= result; i++)
-		{
-			printf("\n i: %d ",i);
-			fgets(buffer, bufferLength, fptr);
-		}*/
+
 		int count = 1;
-		//memset(buffer,0, 255);
-		//printf("Bafercic : %s", buffer);
 		fgets(buffer, 255, fptr);
 		printf("Odradi jednom");
 		while (fgets(buffer, 255, fptr) != NULL) /* read a line */
 		{
 			if (count == result)
 			{
-				//use line or in a function return it
-				//in case of a return first close the file with "fclose(file);"
 				fclose(fptr);
 				break;
 			}
@@ -132,7 +118,6 @@ void rcv_opt(char* message,int received_bytes,int socket)
 			}
 			Sleep(100);
 		}
-		//fprintf(fptr,"Nes");
 
 		printf("\n Bafer %s", buffer);
 		if (send(socket, buffer,strlen(buffer), 0) != strlen(buffer)) 
@@ -142,84 +127,71 @@ void rcv_opt(char* message,int received_bytes,int socket)
 		{
 			printf("SENT: %s ",buffer);	
 		} 
-		/*while(fgets(buffer, bufferLength, fptr)!=NULL) 
-		{
-			if(buffer[0]!='\n')
-			{
-				printf("%s",buffer);
-				if (send(socket, buffer,strlen(buffer), 0) != strlen(buffer)) 
-				{
-							//delete [] data;
-					printf("neuspeh");
-				} else 
-				{
-					printf("SENT: %s ",buffer);
-							//delete [] data;		
-				} 
-				Sleep(100); //da bi mogao odvojeno da posalje, odnosno da bi na prijemu se regularno primilo
-			}
-		}*/
-		//oznaka za kraj slanja
-		/*Sleep(900);
-		char* end;
-		end = "xxx\0";
-		if (send(socket,end,strlen(end), 0) != strlen(end)) 
-		{
-					//delete [] data;
-			printf("neuspeh");
-		} else 
-		{
-			printf("SENT: %s",end);
-					//delete [] data;		
-		} */
 		fclose(fptr);
 	}
+
+	delete [] lineNumb;
+	delete [] file;
 }
 
-void send_opt(char* message,int received_bytes,int socket)
+void sendOpt(char* message, int receivedBytes, int socket)
 {
 	FILE* fptr;
-	char* file = new char[received_bytes - 2 + 4 + 1]; //2 za komandu, 4 za.txt i jedan za termination
-	strcpy(file,message+2);
-	strcpy(file+strlen(message)-2,".txt");
+	char* file = new char[receivedBytes - 2 + 12 + 1]; //2 za komandu, 4 za.txt i jedan za termination, 8 za Clients/
+	strcpy(file, "Clients/");
+	strcpy(file + strlen(file), message + 2);
+	strcpy(file + strlen(file), ".txt");
 	printf("Fajll %s", file);
-	fptr = fopen(file,"a");
+	fptr = fopen(file,"r");
 	
-	if(fptr==NULL)
+	if(fptr == NULL)
 	{
 		printf("Unable to open file\n");
+		char incorrect[22] = "User does not exist!\n";
+		if (send(socket, incorrect,sizeof(incorrect), 0) != sizeof(incorrect)) {
+			//delete [] data;
+		} else {
+			printf("SENT: %s ",incorrect);
+			//delete [] data;
+		}     
 	}else
 	{
+			fclose(fptr);//ovo uradim jer ako odmah otvorim fajl sa a, on ce ga napraviti ako ne postoji
+			fptr = fopen(file, "a");
+
+
 			char msg[200];
-			int rec_byt;
-			rec_byt = recv(socket , msg , sizeof(msg) , 0);
-			msg[rec_byt]= 0;
-			fprintf(fptr,msg);
+			int recByt;
+			recByt = recv(socket , msg , sizeof(msg) , 0);
+			msg[recByt] = 0;
+			printf("poruka %s", msg);
+			fprintf(fptr, msg);
 			fclose(fptr);
-			while(1);
+
+			char correct[15] = "Message sent!\n";
+			if (send(socket, correct,sizeof(correct), 0) != sizeof(correct)) {
+				//delete [] data;
+			} else {
+				printf("SENT: %s ",correct);
+				//delete [] data;
+			} 
 	}
-	int i;
 	printf(" %s", message);
-	while(1);
 }
 
-void check_message(char* message,int received_bytes,int socket)
+void checkMessage(char* message, int receivedBytes, int socket)
 {
 			//za ove provere bih mogao jos jednu funkciju da napravim, da bude modularnije jer ce u suprtonom biti ogromna
 		if(strncmp(message,"user",4)==0)
 		{
 			//ovo bih sve mogao u jednu funkciju
 			FILE *fptr;
-		   // use appropriate location if you are using MacOS or Linux
-			char* file = new char[received_bytes+4];
-			strcpy(file,message+5);
-			strcpy(file+strlen(message)-5,".txt");
-			//printf("%s",file);
-			/*char* path = new char[2+nReceivedBytes+4];
-			strcpy(path,"./");
-			strcpy(path+2,file);
-			printf("%s",path);*/
-			fptr = fopen(file,"r");
+			char* file = new char[receivedBytes + 12]; //8 za Clients/ i 4 za .txt
+			strcpy(file, "Clients/");
+			strcpy(file + strlen(file), message + 5);
+			strcpy(file + strlen(file), ".txt");
+
+			fptr = fopen(file, "r");
 			if(fptr == NULL)
 		    {
 				char* incorrect = "-";
@@ -240,23 +212,23 @@ void check_message(char* message,int received_bytes,int socket)
 					printf("Waiting for the password...\n");
 					//wait for the passwrod
 					int recbyts;
-					char rec[20];
-					recbyts=recv(socket , rec , sizeof(rec) , 0);
-					rec[recbyts]='\0';
-					printf("Primio %s \n",rec);
+					char received[20];
+					recbyts = recv(socket , received , sizeof(received) , 0);
+					received[recbyts] = '\0';
+					printf("Primio %s \n", received);
 
 					int bufferLength = 255;
 					char buffer[255];
 					
 					char* password = new char[recbyts-5];
-					strcpy(password,rec+5);
+					strcpy(password, received + 5);
 
 					fgets(buffer, bufferLength, fptr);
 
-					printf("%s\n",buffer);
-					printf("%s\n",password);
+					printf("%s\n", buffer);
+					printf("%s\n", password);
 
-					if(strncmp(buffer,password,strlen(buffer)-1)==0)
+					if(strncmp(buffer, password, strlen(buffer) - 1) == 0)
 					{
 						char* correct = "+";
 						if (send(socket, correct,sizeof(correct), 0) != sizeof(correct)) {
@@ -277,39 +249,38 @@ void check_message(char* message,int received_bytes,int socket)
 				}
 				fclose(fptr);
 			}
-		}else if(strncmp(message,"1 ",2)==0)
+		}else if(strncmp(message, "1 ", 2) == 0)
 		{
-			printf("Usao u 1");
-			check_opt(message,received_bytes,socket);
-		}else if(strncmp(message,"2 ",2)==0)
+			//printf("Usao u 1");
+			checkOpt(message, receivedBytes, socket);
+		}else if(strncmp(message, "2 ", 2) == 0)
 		{
-			printf("Usao u 2");
-			rcv_opt(message,received_bytes,socket);
-		}else if(strncmp(message,"3 ",2)==0)
+			//printf("Usao u 2");
+			rcvOpt(message, receivedBytes, socket);
+		}else if(strncmp(message, "3 ", 2) == 0)
 		{
-			printf("Usao u 3");
-			send_opt(message,received_bytes,socket);
+			//printf("Usao u 3");
+			sendOpt(message, receivedBytes, socket);
 		}
 		return;
 }
 
-DWORD WINAPI socket_Thread(LPVOID arg)
+DWORD WINAPI socketThread(LPVOID arg)
 {
 	int nReceivedBytes;
-	char client_message[200];
-	printf("U niti sam\n");
-	int socket = *((int*)arg);
+	char clientMessage[200];
+	int socket = *( (int*) arg);
 	char *data = "ACK";
-	if (send(socket, data,sizeof(data), 0) != sizeof(data)) {
+	if (send(socket, data, sizeof(data), 0) != sizeof(data)) {
 		//delete [] data;
 	} else {
 		printf("SENT: %s ",data);
 		//delete [] data;
 	}
 	do{
-		nReceivedBytes=recv(socket , client_message , sizeof(client_message) , 0);
-		client_message[nReceivedBytes]='\0';
-		printf("Primio %s \n",client_message);
+		nReceivedBytes = recv(socket , clientMessage , sizeof(clientMessage) , 0);
+		clientMessage[nReceivedBytes] = '\0';
+		printf("Primio %s \n", clientMessage);
 		if (nReceivedBytes == 0)
 		{
 			printf("Disconnected from server!\n");
@@ -321,10 +292,8 @@ DWORD WINAPI socket_Thread(LPVOID arg)
 			break;
 		}
 
-		check_message(client_message,nReceivedBytes,socket);
+		checkMessage(clientMessage, nReceivedBytes, socket);
 
-		//Sleep(1000); 
-			
 	} while(1);
 	while(1);
 	return 0;	
@@ -333,13 +302,13 @@ DWORD WINAPI socket_Thread(LPVOID arg)
 int main(int argc , char *argv[])
 {
 	WSADATA wsa;
-	SOCKET s , new_socket;
+	SOCKET s , newSocket;
 	struct sockaddr_in server , client;
 	int c;
 //	char *message;
 
 	printf("\nInitialising Winsock...");
-	if (WSAStartup(MAKEWORD(2,2),&wsa) != 0)
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 	{
 		printf("Failed. Error Code : %d",WSAGetLastError());
 		return 1;
@@ -379,19 +348,11 @@ int main(int argc , char *argv[])
 	
     DWORD tid[60];
     int i = 0;
-	while( (new_socket = accept(s , (struct sockaddr *)&client, &c)) != INVALID_SOCKET )
+	while( (newSocket = accept(s , (struct sockaddr *)&client, &c)) != INVALID_SOCKET )
 	{
 		puts("Connection accepted");
 		
-		//Reply to the client
-		/*message = "Hello Client , I have received your connection. But I have to go now, bye\n";
-		send(new_socket , message , strlen(message) , 0);*/
-		//thread *t = new thread(on_client_connect, ref(*this), client);
-
-        //for each client request creates a thread and assign the client request to it to process
-       //so the main thread can entertain next request
-		//CreateThread(NULL, 0, socket_Thread, (LPVOID)&new_socket, 0, &tid[i]); 
-        if( CreateThread(NULL, 0, socket_Thread, (LPVOID)&new_socket, 0, &tid[i]) != NULL )
+        if( CreateThread(NULL, 0, socketThread, (LPVOID)&newSocket, 0, &tid[i]) != NULL )
            printf("Failed to create thread\n");
         if( i >= 50)
         {
@@ -404,7 +365,7 @@ int main(int argc , char *argv[])
         }
 	}
 	
-	if (new_socket == INVALID_SOCKET)
+	if (newSocket == INVALID_SOCKET)
 	{
 		printf("accept failed with error code : %d" , WSAGetLastError());
 		return 1;

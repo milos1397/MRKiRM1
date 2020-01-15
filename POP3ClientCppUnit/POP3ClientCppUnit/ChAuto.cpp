@@ -5,6 +5,8 @@
 
 #define StandardMessageCoding 0x00
 
+bool stop = false;
+
 ChAuto::ChAuto() : FiniteStateMachine(CH_AUTOMATE_TYPE_ID, CH_AUTOMATE_MBX_ID, 1, 3, 3) {
 }
 
@@ -50,17 +52,17 @@ void ChAuto::Initialize() {
 	SetState(FSM_Ch_Idle);	
 	
 	//intitialization message handlers
-	InitEventProc(FSM_Ch_Idle ,MSG_Connection_Request, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Idle_Cl_Connection_Request );
-	InitEventProc(FSM_Ch_Connecting ,TIMER1_EXPIRED, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Connecting_TIMER1_EXPIRED );
-	InitEventProc(FSM_Ch_Connecting ,MSG_Sock_Connection_Acccept, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Connecting_Sock_Connection_Acccept );
-	InitEventProc(FSM_Ch_Connected ,MSG_Cl_MSG, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Connected_Cl_MSG );
-	InitEventProc(FSM_Ch_Connected ,MSG_Sock_MSG, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Connected_Sock_MSG );
+	InitEventProc(FSM_Ch_Idle ,MSG_Connection_Request, (PROC_FUN_PTR)&ChAuto::FSMIdle);
+	InitEventProc(FSM_Ch_Connecting ,TIMER1_EXPIRED, (PROC_FUN_PTR)&ChAuto::FSMTimer1Expired );
+	InitEventProc(FSM_Ch_Connecting ,MSG_Sock_Connection_Acccept, (PROC_FUN_PTR)&ChAuto::FSMSockConnectionAcccept );
+	InitEventProc(FSM_Ch_Connected ,MSG_Cl_MSG, (PROC_FUN_PTR)&ChAuto::FSMConnectedClMSG );
+	InitEventProc(FSM_Ch_Connected ,MSG_Sock_MSG, (PROC_FUN_PTR)&ChAuto::FSMConnectedSockMSG );
 	//InitEventProc(FSM_Ch_Connected ,MSG_Sock_Disconected, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Connected_Sock_Disconected );
 
 	InitTimerBlock(TIMER1_ID, TIMER1_COUNT, TIMER1_EXPIRED);
 }
 
-void ChAuto::FSM_Ch_Idle_Cl_Connection_Request(){
+void ChAuto::FSMIdle(){
 
 	StartTimer(TIMER1_ID);
 	
@@ -80,7 +82,7 @@ void ChAuto::FSM_Ch_Idle_Cl_Connection_Request(){
 
 	//InetPton(AF_INET,"127.0.0.1", &server_addr.sin_addr.s_addr);
 
-	unsigned int addr = inet_addr("127.0.0.1");
+	unsigned int addr = inet_addr(ADRESS);
 	if (addr != INADDR_NONE) 
 	{
         server_addr.sin_addr.s_addr	= addr;
@@ -103,32 +105,32 @@ void ChAuto::FSM_Ch_Idle_Cl_Connection_Request(){
 	server_addr.sin_port = htons(PORT);
 
 	/* Create the socket. */ 
-	m_Socket = socket(PF_INET, SOCK_STREAM, 0);
-	if (m_Socket == INVALID_SOCKET) {
+	mySocket = socket(PF_INET, SOCK_STREAM, 0);
+	if (mySocket == INVALID_SOCKET) {
 		return ;
 	}
 
 	/* Try to reach the server. */
-	if (connect(m_Socket, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+	if (connect(mySocket, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
 		/* Here some additional cleanup should be done. */
-		closesocket(m_Socket);
-		m_Socket = INVALID_SOCKET;
+		closesocket(mySocket);
+		mySocket = INVALID_SOCKET;
 		return ;
 	}
 
 
 
 	/* Then, start the thread that will listen on the the newly created socket. */
-	m_hThread = CreateThread(NULL, 0, ClientListener, (LPVOID) this, 0, &m_nThreadID); 
-	if (m_hThread == NULL) {
+	hThread = CreateThread(NULL, 0, ClientListener, (LPVOID) this, 0, &nThreadID); 
+	if (hThread == NULL) {
 		/* Cannot create thread.*/
-		closesocket(m_Socket);
-		m_Socket = INVALID_SOCKET;
+		closesocket(mySocket);
+		mySocket = INVALID_SOCKET;
 		return ;
 	}	
 }
 
-void ChAuto::FSM_Ch_Connecting_TIMER1_EXPIRED(){
+void ChAuto::FSMTimer1Expired(){
 
 	PrepareNewMessage(0x00, MSG_Cl_Connection_Reject);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -138,7 +140,7 @@ void ChAuto::FSM_Ch_Connecting_TIMER1_EXPIRED(){
 	SetState(FSM_Ch_Idle);
 
 }
-void ChAuto::FSM_Ch_Connecting_Sock_Connection_Acccept(){
+void ChAuto::FSMSockConnectionAcccept(){
 
 	PrepareNewMessage(0x00, MSG_Cl_Connection_Accept);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -150,29 +152,29 @@ void ChAuto::FSM_Ch_Connecting_Sock_Connection_Acccept(){
 	SetState(FSM_Ch_Connected);
 
 }
-void ChAuto::FSM_Ch_Connected_Cl_MSG(){
+void ChAuto::FSMConnectedClMSG(){
 
 	//printf("usao u slanje");
-	char* data = new char[255];
+	char data[255];
 	uint8* buffer = GetParam(PARAM_DATA);
 	uint16 size = buffer[2];
 
-	memcpy(data,buffer + 4,size);
+	memcpy(data,buffer + 4, size);
 
 	data[size] = 0;
-	if (send(m_Socket, data, size, 0) != size) {
-		delete [] data;
+	if (send(mySocket, data, size, 0) != size) {
+		//delete [] data;
 	} else {
 		//printf("SENT: %s",data);
-		delete [] data;
+		//delete [] data;
 	}
 
 }
-void ChAuto::FSM_Ch_Connected_Sock_MSG(){
+void ChAuto::FSMConnectedSockMSG(){
 
 }
-/*
-void ChAuto::FSM_Ch_Connected_Sock_Disconected(){
+
+void ChAuto::FSMSockDisconected(){
 
 	PrepareNewMessage(0x00, MSG_Cl_Disconected);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -181,15 +183,15 @@ void ChAuto::FSM_Ch_Connected_Sock_Disconected(){
 
 	SetState(FSM_Ch_Idle);
 
-}*/
+}
 
-void ChAuto::NetMsg_2_FSMMsg(const char* apBuffer, uint16 anBufferLength) {
+void ChAuto::NetMsgToFSMMsg(const char* apBuffer, uint16 anBufferLength) {
 	
 	//printf("Poslao:");
 	PrepareNewMessage(0x00, MSG_MSG);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
 	SetMsgObjectNumberTo(0);
-	AddParam(PARAM_DATA,anBufferLength,(uint8 *)apBuffer);
+	AddParam(PARAM_DATA, anBufferLength, (uint8 *)apBuffer);
 	SendMessage(CL_AUTOMATE_MBX_ID);
 	
 }
@@ -197,38 +199,38 @@ void ChAuto::NetMsg_2_FSMMsg(const char* apBuffer, uint16 anBufferLength) {
 DWORD ChAuto::ClientListener(LPVOID param) {
 	ChAuto* pParent = (ChAuto*) param;
 	int nReceivedBytes;
-	char* buffer = new char[255];
+	char buffer[255];
 	//pParent->FSM_Ch_Connecting_Sock_Connection_Acccept();
 
 
-	nReceivedBytes = recv(pParent->m_Socket, buffer, 255, 0);
+	nReceivedBytes = recv(pParent->mySocket, buffer, 255, 0);
 	if (nReceivedBytes < 0) {
 			DWORD err = WSAGetLastError();
 	}else{
-		pParent->FSM_Ch_Connecting_Sock_Connection_Acccept();
+		pParent->FSMSockConnectionAcccept();
 		
 		/* Receive data from the network until the socket is closed. */ 
 		do {
-			nReceivedBytes = recv(pParent->m_Socket, buffer, 255, 0);
-			/*if (nReceivedBytes == 0)
+			nReceivedBytes = recv(pParent->mySocket, buffer, 255, 0);
+			if (nReceivedBytes <= 0)
 			{
-				printf("Disconnected from server!\n");
 				//pParent->FSM_Ch_Connected_Sock_Disconected();
+				printf("\nServer disconnected!");
+				stop = true;
 				break;
 			}
-			if (nReceivedBytes < 0) {
+			/*if (nReceivedBytes < 0) {
 				printf("error\n");
 				DWORD err = WSAGetLastError();
+				//stop = true;
 				break;
 			}*/
-			pParent->NetMsg_2_FSMMsg(buffer, nReceivedBytes);
+			pParent->NetMsgToFSMMsg(buffer, nReceivedBytes);
 
 			Sleep(100); 
 			
-		} while(1);
-
+			} while(1);
 	}
 
-	delete [] buffer;
 	return 1;
 }

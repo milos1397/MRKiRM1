@@ -1,4 +1,4 @@
-﻿Build started 1/14/2020 4:07:53 PM.
+﻿Build started 1/15/2020 7:44:25 AM.
      1>Project "C:\Users\milos1997\Desktop\MRKiRM1\POP3ClientCppUnit\POP3ClientCppUnit\POP3ClientCppUnit.vcxproj" on node 3 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Debug\POP3ClientCppUnit.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -47,4 +47,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.34
+Time Elapsed 00:00:01.59

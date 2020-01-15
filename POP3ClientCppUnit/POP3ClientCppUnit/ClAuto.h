@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <conio.h>
 
+
 class ClAuto : public FiniteStateMachine {
 	
 	StandardMessage StandardMsgCoding;
@@ -26,22 +27,23 @@ public:
 
 	void Initialize();
 	
-	void FSM_Cl_Ready_User_Check_Mail();
-	void FSM_Cl_Connecting_Cl_Connection_Reject();
-	void FSM_Cl_Connecting_Cl_Connectiong_Accept();
-	void FSM_Cl_Authorising_User_Name_Password();
-	void FSM_Cl_User_Check_MSG();
-	void FSM_Cl_Pass_Check_MSG();
-	void FSM_Cl_Options_Show();
-	void FSM_Cl_Receive();
+	void FSMCheckMail();
+	void FSMConnectionReject();
+	void FSMConnectionAccept();
+	void FSMAuthorising();
+	void FSMUserCheck();
+	void FSMPassCheck();
+	void FSMOptionsShow();
+	void FSMReceive();
+	//void FSM_Cl_Server_Disc();
 
 	void Start();
 
 protected:
-	char m_UserName[20];
-	char m_Password[20];
+	char userName[20];
+	char password[20];
 	int command;
-	int msg_num;
+	int msgNum;
 };
 
 

@@ -10,6 +10,7 @@
 
 #define AUTOMAT_COUNT 2
 #define MSGBOX_COUNT 2
+
 /* FSM system instance. */
 static FSMSystem sys(AUTOMAT_COUNT,MSGBOX_COUNT);
 
@@ -31,11 +32,13 @@ DWORD WINAPI SystemThread(void *data) {
 
 	/* Mandatory kernel initialization */
 	printf("[*] Initializing system...\n");
-	sys.InitKernel(buffClassNo, buffsCount, buffsLength, 3, Timer1s);
+	sys.InitKernel(buffClassNo, buffsCount, buffsLength, 5, Timer1s);
 
 	/* Add automates to the system */
+	printf("dodavanje");
 	sys.Add(&Channel, CH_AUTOMATE_TYPE_ID, 1, true);
 	sys.Add(&Client, CL_AUTOMATE_TYPE_ID, 1, true);
+	printf("posle");
 
 	/* Start the first automate - usually it sends the first message, 
 	since only automates can send messages */
@@ -57,8 +60,7 @@ void main() {
 	thread_handle = CreateThread(NULL, 0, SystemThread, NULL, 0, &thread_id);
 
 	/* Wait for keypress. */
-	while(true);
-	getch();
+	while(!stop);
 
 	/* Notify the system to stop - this causes the thread to finish */
 	printf("[*] Stopping system...\n");

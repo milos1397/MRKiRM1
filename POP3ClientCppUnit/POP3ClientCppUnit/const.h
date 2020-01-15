@@ -41,7 +41,8 @@ const uint16 MSG_Cl_Disconected			= 0x000f;
 const uint16 MSG_Option					= 0x0011;
 
 
-#define ADRESS "localhost"
+
+#define ADRESS "127.0.0.1"
 //#define ADRESS "mail.spymac.com"
 //#define ADRESS "krtlab8"
 #define PORT 8888

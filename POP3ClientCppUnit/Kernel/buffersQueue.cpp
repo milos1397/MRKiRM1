@@ -222,12 +222,16 @@ bool TBufferQue::IsEmpty(){
 //  exception.
 TBufferQue::~TBufferQue() {
   delete []BufferPtr;
+    /*if( FreeBufferCount != BuffersInitiated) {
+	  printf("\r\nNowFree:%lu, InitFree:%lu\r\n", FreeBufferCount, BuffersInitiated);
+	  throw TErrorObject( __LINE__, __FILE__, 0x11fe0105);
+	}
   assert(FreeBufferCount == BuffersInitiated);
 
-//  if( FreeBufferCount != BuffersInitiated) {
-//  printf("\r\nNowFree:%lu, InitFree:%lu\r\n", FreeBufferCount, BuffersInitiated);
-//  throw TErrorObject( __LINE__, __FILE__, 0x11fe0105);
-// }
+  if( FreeBufferCount != BuffersInitiated) {
+	  printf("\r\nNowFree:%lu, InitFree:%lu\r\n", FreeBufferCount, BuffersInitiated);
+	  throw TErrorObject( __LINE__, __FILE__, 0x11fe0105);
+}*/
 
 #ifdef WIN32
   DeleteCriticalSection( &CsBuffer);
