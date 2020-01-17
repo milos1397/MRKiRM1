@@ -68,7 +68,6 @@ void ChAuto::Initialize()
 	InitEventProc(FSM_Ch_Connecting ,MSG_Sock_Connection_Acccept, (PROC_FUN_PTR)&ChAuto::FSMSockConnectionAcccept );
 	InitEventProc(FSM_Ch_Connected ,MSG_Cl_MSG, (PROC_FUN_PTR)&ChAuto::FSMConnectedClMSG );
 	InitEventProc(FSM_Ch_Connected ,MSG_Sock_MSG, (PROC_FUN_PTR)&ChAuto::FSMConnectedSockMSG );
-	//InitEventProc(FSM_Ch_Connected ,MSG_Sock_Disconected, (PROC_FUN_PTR)&ChAuto::FSM_Ch_Connected_Sock_Disconected );
 
 	InitTimerBlock(TIMER1_ID, TIMER1_COUNT, TIMER1_EXPIRED);
 }

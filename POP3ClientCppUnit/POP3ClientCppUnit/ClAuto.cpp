@@ -71,13 +71,6 @@ void ClAuto::Initialize()
 	InitEventProc(FSM_Cl_Pass_Check, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSMPassCheck );
 	InitEventProc(FSM_Cl_Options, MSG_Option, (PROC_FUN_PTR)&ClAuto::FSMOptionsShow);
 	InitEventProc(FSM_Cl_Options, MSG_MSG, (PROC_FUN_PTR)&ClAuto::FSMReceive);
-	//disconnected
-	
-	//InitEventProc(FSM_Cl_Options, MSG_Cl_Disconected, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Server_Disc);
-	/*InitEventProc(FSM_Cl_User_Check, MSG_Cl_Disconected, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Server_Disc );
-	InitEventProc(FSM_Cl_User_Check, MSG_User_Check_Mail, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Server_Disc );
-	InitEventProc(FSM_Cl_Pass_Check, MSG_Cl_Disconected, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Server_Disc );
-	InitEventProc(FSM_Cl_Authorising, MSG_Cl_Disconected, (PROC_FUN_PTR)&ClAuto::FSM_Cl_Server_Disc );*/
 }
 
 void ClAuto::FSMCheckMail()
@@ -160,6 +153,7 @@ void ClAuto::FSMUserCheck()
 	}
 	else
 	{
+		printf("User does not exist!\n");
 		SetState(FSM_Cl_Authorising);
 	
 		PrepareNewMessage(0x00, MSG_User_Name_Password);
@@ -197,6 +191,7 @@ void ClAuto::FSMPassCheck()
 	else
 	{
 		//vraca se u authorising, ako ne unese dobru sifru
+		printf("\Incorrect password, enter login details again!\n");
 		SetState(FSM_Cl_Authorising);
 	
 		PrepareNewMessage(0x00, MSG_User_Name_Password);
@@ -400,12 +395,6 @@ void ClAuto::FSMReceive()
 		SendMessage(CL_AUTOMATE_MBX_ID);
 	}
 }
-
-/*void ClAuto::FSM_Cl_Server_Disc()
-{
-	//printf("\nServer disconnected!");
-	//stop = true;
-}*/
 
 void ClAuto::Start()
 {
