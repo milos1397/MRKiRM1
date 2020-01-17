@@ -44,6 +44,8 @@ protected:
 	char password[20];
 	int command;
 	int msgNum;
+	int msgCount;//ako nema poruka
+	int checkPressed;
 };
 
 

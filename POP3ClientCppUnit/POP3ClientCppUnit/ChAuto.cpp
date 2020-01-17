@@ -7,48 +7,59 @@
 
 bool stop = false;
 
-ChAuto::ChAuto() : FiniteStateMachine(CH_AUTOMATE_TYPE_ID, CH_AUTOMATE_MBX_ID, 1, 3, 3) {
+ChAuto::ChAuto() : FiniteStateMachine(CH_AUTOMATE_TYPE_ID, CH_AUTOMATE_MBX_ID, 1, 3, 3) 
+{
 }
 
-ChAuto::~ChAuto() {
+ChAuto::~ChAuto() 
+{
 }
 
-uint8 ChAuto::GetAutomate() {
+uint8 ChAuto::GetAutomate() 
+{
 	return CH_AUTOMATE_TYPE_ID;
 }
 
 /* This function actually connnects the ChAuto with the mailbox. */
-uint8 ChAuto::GetMbxId() {
+uint8 ChAuto::GetMbxId() 
+{
 	return CH_AUTOMATE_MBX_ID;
 }
 
-uint32 ChAuto::GetObject() {
+uint32 ChAuto::GetObject() 
+{
 	return GetObjectId();
 }
 
-MessageInterface *ChAuto::GetMessageInterface(uint32 id) {
+MessageInterface *ChAuto::GetMessageInterface(uint32 id) 
+{
 	return &StandardMsgCoding;
 }
 
-void ChAuto::SetDefaultHeader(uint8 infoCoding) {
+void ChAuto::SetDefaultHeader(uint8 infoCoding) 
+{
 	SetMsgInfoCoding(infoCoding);
 	SetMessageFromData();
 }
 
-void ChAuto::SetDefaultFSMData() {
+void ChAuto::SetDefaultFSMData() 
+{
 	SetDefaultHeader(StandardMessageCoding);
 }
 
-void ChAuto::NoFreeInstances() {
+void ChAuto::NoFreeInstances() 
+{
 	printf("[%d] ChAuto::NoFreeInstances()\n", GetObjectId());
 }
 
-void ChAuto::Reset() {
+void ChAuto::Reset() 
+{
 	printf("[%d] ChAuto::Reset()\n", GetObjectId());
 }
 
 
-void ChAuto::Initialize() {
+void ChAuto::Initialize() 
+{
 	SetState(FSM_Ch_Idle);	
 	
 	//intitialization message handlers
@@ -62,7 +73,8 @@ void ChAuto::Initialize() {
 	InitTimerBlock(TIMER1_ID, TIMER1_COUNT, TIMER1_EXPIRED);
 }
 
-void ChAuto::FSMIdle(){
+void ChAuto::FSMIdle()
+{
 
 	StartTimer(TIMER1_ID);
 	
@@ -77,42 +89,22 @@ void ChAuto::FSMIdle(){
 	/* Try to resolve the server name. */
 	sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
-	
-	//unsigned int addr = inet_addr(ADRESS);
-
-	//InetPton(AF_INET,"127.0.0.1", &server_addr.sin_addr.s_addr);
 
 	unsigned int addr = inet_addr(ADRESS);
-	if (addr != INADDR_NONE) 
-	{
-        server_addr.sin_addr.s_addr	= addr;
-        server_addr.sin_family		= AF_INET;
-    }
-    else 
-	{
-		printf("Greska");
-        /*hostent* hp = gethostbyname(ADRESS);
-        if (hp != 0)  
-		{
-            memcpy( &(server_addr.sin_addr), hp->h_addr, hp->h_length );
-            server_addr.sin_family = hp->h_addrtype;
-        }
-        else 
-		{
-			return ;
-        }*/
-    }
+	server_addr.sin_addr.s_addr	= addr;
+    server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(PORT);
 
 	/* Create the socket. */ 
-	mySocket = socket(PF_INET, SOCK_STREAM, 0);
-	if (mySocket == INVALID_SOCKET) {
+	mySocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (mySocket == INVALID_SOCKET) 
+	{
 		return ;
 	}
 
 	/* Try to reach the server. */
-	if (connect(mySocket, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
-		/* Here some additional cleanup should be done. */
+	if (connect(mySocket, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) 
+	{
 		closesocket(mySocket);
 		mySocket = INVALID_SOCKET;
 		return ;
@@ -122,7 +114,8 @@ void ChAuto::FSMIdle(){
 
 	/* Then, start the thread that will listen on the the newly created socket. */
 	hThread = CreateThread(NULL, 0, ClientListener, (LPVOID) this, 0, &nThreadID); 
-	if (hThread == NULL) {
+	if (hThread == NULL) 
+	{
 		/* Cannot create thread.*/
 		closesocket(mySocket);
 		mySocket = INVALID_SOCKET;
@@ -130,7 +123,8 @@ void ChAuto::FSMIdle(){
 	}	
 }
 
-void ChAuto::FSMTimer1Expired(){
+void ChAuto::FSMTimer1Expired()
+{
 
 	PrepareNewMessage(0x00, MSG_Cl_Connection_Reject);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -140,7 +134,8 @@ void ChAuto::FSMTimer1Expired(){
 	SetState(FSM_Ch_Idle);
 
 }
-void ChAuto::FSMSockConnectionAcccept(){
+void ChAuto::FSMSockConnectionAcccept()
+{
 
 	PrepareNewMessage(0x00, MSG_Cl_Connection_Accept);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -152,9 +147,9 @@ void ChAuto::FSMSockConnectionAcccept(){
 	SetState(FSM_Ch_Connected);
 
 }
-void ChAuto::FSMConnectedClMSG(){
+void ChAuto::FSMConnectedClMSG()
+{
 
-	//printf("usao u slanje");
 	char data[255];
 	uint8* buffer = GetParam(PARAM_DATA);
 	uint16 size = buffer[2];
@@ -162,19 +157,17 @@ void ChAuto::FSMConnectedClMSG(){
 	memcpy(data,buffer + 4, size);
 
 	data[size] = 0;
-	if (send(mySocket, data, size, 0) != size) {
-		//delete [] data;
-	} else {
-		//printf("SENT: %s",data);
-		//delete [] data;
-	}
+
+	send(mySocket, data, size, 0);
 
 }
-void ChAuto::FSMConnectedSockMSG(){
+void ChAuto::FSMConnectedSockMSG()
+{
 
 }
 
-void ChAuto::FSMSockDisconected(){
+void ChAuto::FSMSockDisconected()
+{
 
 	PrepareNewMessage(0x00, MSG_Cl_Disconected);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
@@ -185,9 +178,9 @@ void ChAuto::FSMSockDisconected(){
 
 }
 
-void ChAuto::NetMsgToFSMMsg(const char* apBuffer, uint16 anBufferLength) {
+void ChAuto::NetMsgToFSMMsg(const char* apBuffer, uint16 anBufferLength) 
+{
 	
-	//printf("Poslao:");
 	PrepareNewMessage(0x00, MSG_MSG);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
 	SetMsgObjectNumberTo(0);
@@ -200,31 +193,26 @@ DWORD ChAuto::ClientListener(LPVOID param) {
 	ChAuto* pParent = (ChAuto*) param;
 	int nReceivedBytes;
 	char buffer[255];
-	//pParent->FSM_Ch_Connecting_Sock_Connection_Acccept();
 
 
 	nReceivedBytes = recv(pParent->mySocket, buffer, 255, 0);
-	if (nReceivedBytes < 0) {
+	if (nReceivedBytes < 0) 
+	{
 			DWORD err = WSAGetLastError();
-	}else{
+	}else
+	{
 		pParent->FSMSockConnectionAcccept();
 		
 		/* Receive data from the network until the socket is closed. */ 
-		do {
+		do 
+		{
 			nReceivedBytes = recv(pParent->mySocket, buffer, 255, 0);
 			if (nReceivedBytes <= 0)
 			{
-				//pParent->FSM_Ch_Connected_Sock_Disconected();
 				printf("\nServer disconnected!");
 				stop = true;
 				break;
 			}
-			/*if (nReceivedBytes < 0) {
-				printf("error\n");
-				DWORD err = WSAGetLastError();
-				//stop = true;
-				break;
-			}*/
 			pParent->NetMsgToFSMMsg(buffer, nReceivedBytes);
 
 			Sleep(100); 
