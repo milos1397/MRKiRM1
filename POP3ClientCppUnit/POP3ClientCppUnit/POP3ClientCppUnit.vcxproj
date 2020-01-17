@@ -118,6 +118,7 @@
     <ClInclude Include="ClAuto.h" />
     <ClInclude Include="const.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="MainTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Kernel\buffers.cpp" />
@@ -150,6 +151,8 @@
     <ClCompile Include="ChAuto.cpp" />
     <ClCompile Include="ClAuto.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainTest.cpp" />
+    <ClCompile Include="RUN.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

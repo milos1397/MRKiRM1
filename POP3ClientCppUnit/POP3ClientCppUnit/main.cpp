@@ -50,7 +50,7 @@ DWORD WINAPI SystemThread(void *data) {
 	return 0;
 }
 
-void main() {
+void mainProgram() {
 	DWORD thread_id;
 	HANDLE thread_handle;
 

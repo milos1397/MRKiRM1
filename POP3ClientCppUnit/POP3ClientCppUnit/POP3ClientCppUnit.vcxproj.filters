@@ -119,6 +119,9 @@
     <ClInclude Include="ChAuto.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MainTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -209,6 +212,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ChAuto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RUN.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
