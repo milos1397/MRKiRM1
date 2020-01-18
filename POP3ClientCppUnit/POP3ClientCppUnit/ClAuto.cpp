@@ -121,11 +121,7 @@ void ClAuto::FSMAuthorising()
 	char command[20] = "user ";
 	strcpy(command + 5, userName);
 
-	PrepareNewMessage(0x00, MSG_Cl_MSG);
-	SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-	SetMsgObjectNumberTo(0);
-	AddParam(PARAM_DATA, strlen(command), (uint8*)command);
-	SendMessage(CH_AUTOMATE_MBX_ID);
+	SendToChannel(command);
 	
 	SetState(FSM_Cl_User_Check);
 }
@@ -148,11 +144,7 @@ void ClAuto::FSMUserCheck()
 		char command[20] = "pass ";
 		strcpy(command + 5, password);
 
-		PrepareNewMessage(0x00, MSG_Cl_MSG);
-		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-		SetMsgObjectNumberTo(0);
-		AddParam(PARAM_DATA, strlen(command), (uint8*)command);
-		SendMessage(CH_AUTOMATE_MBX_ID);
+		SendToChannel(command);
 		
 		SetState(FSM_Cl_Pass_Check);
 	}
@@ -184,14 +176,11 @@ void ClAuto::FSMPassCheck()
 		
         SetState(FSM_Cl_Options);
 
-		msgCount = 1;
+		//control variables init
 		msgNum = 0;
 		checkPressed = 0;
 
-		PrepareNewMessage(0x00, MSG_Option);
-		SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-		SetMsgObjectNumberTo(0);
-		SendMessage(CL_AUTOMATE_MBX_ID);
+		SendMessOpt();
 	}
 	else
 	{
@@ -219,7 +208,7 @@ void ClAuto::FSMOptionsShow()
 		printf("Enter your option[1-4]: ");
 		scanf(" %c", &opt);
 	}while(opt == '0' || opt > '4');
-
+	//logout
 	if(opt == '4')
 	{
 		SetState(FSM_Cl_Authorising);
@@ -228,7 +217,7 @@ void ClAuto::FSMOptionsShow()
 		SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
 		SetMsgObjectNumberTo(0);
 		SendMessage(CL_AUTOMATE_MBX_ID);
-	}else if(opt == '1')
+	}else if(opt == '1') //checkmessages
 	{
 		command = 1;
 		char msg[20] = "1 ";
@@ -239,29 +228,25 @@ void ClAuto::FSMOptionsShow()
 
 		checkPressed = 1;
 
-
-		PrepareNewMessage(0x00, MSG_Cl_MSG);
-		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-		SetMsgObjectNumberTo(0);
-		AddParam(PARAM_DATA, strlen(msg), (uint8*)msg);
-		SendMessage(CH_AUTOMATE_MBX_ID);
+		SendToChannel(msg);
 
 	}else if(opt == '2')
 	{
-		//ako uopste i ima poruka
+		//you need first to check messages, and then you can receive
 		if(checkPressed == 1)
 		{
+			//checks if you have any messages
 			if(msgNum != 0)
 			{
 				command = 2;
 				char msg[20] = "2 ";
 				long int result;
 
-				char numb[4];
+				char numb[8];
 				do
 				{
 					printf("\nEnter the order number of the message you want to receive: ");
-					scanf("%s",&numb);
+					scanf(" %s",&numb);
 
 					char* end;
 					result = strtol(numb, &end, 10);
@@ -270,40 +255,24 @@ void ClAuto::FSMOptionsShow()
 
 				strcpy(msg + 2, numb);
 
-				PrepareNewMessage(0x00, MSG_Cl_MSG);
-				SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-				SetMsgObjectNumberTo(0);
-				AddParam(PARAM_DATA, strlen(msg), (uint8*)msg);
-				SendMessage(CH_AUTOMATE_MBX_ID);
+				//send which message you want to receive
+				SendToChannel(msg);
 
-
-
-				//posalji usera
-				PrepareNewMessage(0x00, MSG_Cl_MSG);
-				SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-				SetMsgObjectNumberTo(0);
-				AddParam(PARAM_DATA, strlen(userName), (uint8*)userName);
-				SendMessage(CH_AUTOMATE_MBX_ID);
+				//send your username, in order to know which file to open and read
+				SendToChannel(userName);
 			}else
 			{
 				printf("The are no messages for you!\n");
 
-				PrepareNewMessage(0x00, MSG_Option);
-				SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-				SetMsgObjectNumberTo(0);
-				SendMessage(CL_AUTOMATE_MBX_ID);
+				SendMessOpt();
 			}
 		}else
 		{
 			printf("You need first to check the messages!\n");
 			
-			PrepareNewMessage(0x00, MSG_Option);
-			SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-			SetMsgObjectNumberTo(0);
-			SendMessage(CL_AUTOMATE_MBX_ID);
+			SendMessOpt();
 		}
-
-	}else 
+	}else //sending message
 	{
 		command = 3;
 		char msg[200] = "3 ";
@@ -311,33 +280,22 @@ void ClAuto::FSMOptionsShow()
 		char text[100];
 		char by[5] = " by ";
 
-
 		printf("\nSend to: ");
 		scanf("%s", &contact);
 
 		printf("\nMessage: ");
 		scanf(" %[^\n]s", text);
 
-		
 		strcpy(msg + 2, contact);
 
-		//prvo posaljem samo primalaca
-		PrepareNewMessage(0x00, MSG_Cl_MSG);
-		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-		SetMsgObjectNumberTo(0);
-		AddParam(PARAM_DATA, strlen(msg), (uint8*)msg);
-		SendMessage(CH_AUTOMATE_MBX_ID);
+		//first send receiver
+		SendToChannel(msg);
 
-		//posalje poruku i posiljaoca
+		//then send sender and message
 		strcpy(text + strlen(text), by);
 		strcpy(text + strlen(text), userName);
 		strcpy(text + strlen(text), "\n");
-
-		PrepareNewMessage(0x00, MSG_Cl_MSG);
-		SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
-		SetMsgObjectNumberTo(0);
-		AddParam(PARAM_DATA, strlen(text), (uint8*)text);
-		SendMessage(CH_AUTOMATE_MBX_ID);
+		SendToChannel(text);
 	}
 }
 
@@ -353,20 +311,15 @@ void ClAuto::FSMReceive()
 
 	if(command == 1)
 	{
-		//ako je kraj poruka onda izbaci options
+		//xxx means there no more messages, go to Options
 		if(strncmp(data, "xxx", 3) == 0)
 		{
-			if(msgCount == 1)
+			if(msgNum == 0)
 				printf("There are no messages for you!\n");
-			PrepareNewMessage(0x00, MSG_Option);
-			SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-			SetMsgObjectNumberTo(0);
-			SendMessage(CL_AUTOMATE_MBX_ID);
-			msgCount = 1;
+			SendMessOpt();
 		}else//ako nije kraj samo printaj
 		{
 			msgNum++;
-			msgCount++;
 			printf("%d. %s", msgNum, data);
 		}
 	}else if(command == 2)
@@ -379,31 +332,43 @@ void ClAuto::FSMReceive()
 		if(fptr == NULL)
 		{
 			printf("Unable to open file\n");
-		}else
+		}else//save message locally
 		{
 			fprintf(fptr, data);
 
-			PrepareNewMessage(0x00, MSG_Option);
-			SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-			SetMsgObjectNumberTo(0);
-			SendMessage(CL_AUTOMATE_MBX_ID);
+			SendMessOpt();
 			fclose(fptr);
 		}
 	}else if(command == 3)
 	{
-		//isprintaj povratnu poruku i predji u opcije opet
+		//whether the message is sent or not
 		printf(" %s", data);
 		
-		PrepareNewMessage(0x00, MSG_Option);
-		SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-		SetMsgObjectNumberTo(0);
-		SendMessage(CL_AUTOMATE_MBX_ID);
+		SendMessOpt();
 	}
 }
 
 void ClAuto::Start()
 {
 	PrepareNewMessage(0x00, MSG_User_Check_Mail);
+	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+	SetMsgObjectNumberTo(0);
+	SendMessage(CL_AUTOMATE_MBX_ID);
+}
+
+
+void ClAuto::SendToChannel(char* buffer)
+{
+	PrepareNewMessage(0x00, MSG_Cl_MSG);
+	SetMsgToAutomate(CH_AUTOMATE_TYPE_ID);
+	SetMsgObjectNumberTo(0);
+	AddParam(PARAM_DATA, strlen(buffer), (uint8*)buffer);
+	SendMessage(CH_AUTOMATE_MBX_ID);
+}
+
+void ClAuto::SendMessOpt()
+{
+	PrepareNewMessage(0x00, MSG_Option);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
 	SetMsgObjectNumberTo(0);
 	SendMessage(CL_AUTOMATE_MBX_ID);

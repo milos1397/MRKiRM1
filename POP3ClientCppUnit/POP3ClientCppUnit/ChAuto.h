@@ -36,16 +36,15 @@ class ChAuto : public FiniteStateMachine {
 	void	FSMTimer1Expired();
 	void	FSMSockConnectionAcccept();
 	//FSM_Ch_Connected
-	void	FSMConnectedClMSG();
+	void	FSMConnectedClMSG();//sending messages to server
 	void	FSMConnectedSockMSG();
-	void	FSMSockDisconected();
 		
 public:
 	ChAuto();
 	~ChAuto();
 	
 	//bool FSMMsg_2_NetMsg();
-	void NetMsgToFSMMsg(const char* apBuffer, uint16 anBufferLength);
+	void NetMsgToFSMMsg(const char* apBuffer, uint16 anBufferLength);//sending messages to client
 
 	void Initialize();
 

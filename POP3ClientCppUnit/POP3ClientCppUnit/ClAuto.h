@@ -36,6 +36,8 @@ public:
 	void FSMOptionsShow();
 	void FSMReceive();
 
+	void SendToChannel(char* buffer);
+	void SendMessOpt();
 	void TestCorrPass();
 	void TestIncorrPass();
 	void Start();
@@ -46,8 +48,7 @@ protected:
 	char password[20];
 	int command;
 	int msgNum;
-	int msgCount;//ako nema poruka
-	int checkPressed;
+	int checkPressed;//receive can be done only if check option is pressed before
 };
 
 

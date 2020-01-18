@@ -146,6 +146,7 @@ void ChAuto::FSMSockConnectionAcccept()
 	SetState(FSM_Ch_Connected);
 
 }
+
 void ChAuto::FSMConnectedClMSG()
 {
 
@@ -162,18 +163,6 @@ void ChAuto::FSMConnectedClMSG()
 }
 void ChAuto::FSMConnectedSockMSG()
 {
-
-}
-
-void ChAuto::FSMSockDisconected()
-{
-
-	PrepareNewMessage(0x00, MSG_Cl_Disconected);
-	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
-	SetMsgObjectNumberTo(0);
-	SendMessage(CL_AUTOMATE_MBX_ID);
-
-	SetState(FSM_Ch_Idle);
 
 }
 
@@ -208,7 +197,7 @@ DWORD ChAuto::ClientListener(LPVOID param) {
 			nReceivedBytes = recv(pParent->mySocket, buffer, 255, 0);
 			if (nReceivedBytes <= 0)
 			{
-				printf("\nServer disconnected!");
+				printf("\nError!");
 				stop = true;
 				break;
 			}
@@ -218,6 +207,5 @@ DWORD ChAuto::ClientListener(LPVOID param) {
 			
 			} while(1);
 	}
-
 	return 1;
 }

@@ -11,7 +11,7 @@
 void checkOpt(char* message, int receivedBytes, int socket)
 {
 	FILE *fptr;
-	char *file = new char[receivedBytes - 2 + 12 + 1]; //2 karaktera za 1 i 4 za .txt I 8 za Clients/, 1 jos mora da se doda
+	char file[30];
 	strcpy(file, "Clients/");
 	strcpy(file + strlen(file), message + 2);
 	strcpy(file + strlen(file),".txt");
@@ -25,6 +25,7 @@ void checkOpt(char* message, int receivedBytes, int socket)
 		int bufferLength = 255;
 		char buffer[255];
 
+		//skip the first line because it's password
 		fgets(buffer, bufferLength, fptr);
 
 		while(fgets(buffer, bufferLength, fptr)!=NULL) 
@@ -36,34 +37,33 @@ void checkOpt(char* message, int receivedBytes, int socket)
 				Sleep(100); //da bi mogao odvojeno da posalje, odnosno da bi na prijemu se regularno primilo
 			}
 		}
-		//oznaka za kraj slanja
+		//xxx means end of sending
 		Sleep(900);
 		char* end;
 		end = "xxx\0";
 		send(socket, end, strlen(end), 0);
 		fclose(fptr);
 	}
-	delete file;
 }
 
 void rcvOpt(char* message, int receivedBytes, int socket)
 {
-	//broj linije koju zelim da primim
-	char* lineNumb = new char[3];
+	//number of message client wants to receive == line number in the file
+	char lineNumb[3];
 	strcpy(lineNumb, message + 2);
 	
-	//pretvorim je u broj
+	//convert to the number
 	char* end;
 	long int result = strtol(lineNumb, &end, 10);
 
-	//primim user-a, da bih znao koji fajl da otvorim i procitam tu liniju
+	//receive username, in order to know which file to read
 	char user[20];
 	int recbyts = recv(socket , user , sizeof(user) , 0);
 	user[recbyts] = '\0';
 
-	//otvaram fajl
+	//open file
 	FILE *fptr;
-	char *file = new char[recbyts + 13]; //8 za Clients\ i 4 za .txt
+	char file[30];
 	strcpy(file, "Clients/");
 	strcpy(file + strlen(file), user);
 	strcpy(file + strlen(file), ".txt"); 
@@ -80,45 +80,43 @@ void rcvOpt(char* message, int receivedBytes, int socket)
 			printf("nl");
 		}
 
-		printf("Otvorio fajl ");
-		printf("Br linije %d ", result);
+		printf("Line number %d ", result);
 
 		int count = 1;
 		fgets(buffer, 255, fptr);
-		printf("Odradi jednom");
 		while (fgets(buffer, 255, fptr) != NULL) /* read a line */
 		{
-			if (count == result)
+			//skip empty lines
+			if(buffer[0]!='\n')
 			{
-				fclose(fptr);
-				break;
-			}
-			else
-			{
-				count++;
+				if (count == result)
+				{
+					fclose(fptr);
+					break;
+				}
+				else
+				{
+					count++;
+				}
 			}
 			Sleep(100);
 		}
-
-		printf("\n Bafer %s", buffer);
+		printf("\n Line which is being sent: %s", buffer);
 		send(socket, buffer, strlen(buffer), 0);
 		fclose(fptr);
 	}
-
-	delete [] lineNumb;
-	delete [] file;
 }
 
 void sendOpt(char* message, int receivedBytes, int socket)
 {
 	FILE* fptr;
-	char* file = new char[receivedBytes - 2 + 12 + 1]; //2 za komandu, 4 za.txt i jedan za termination, 8 za Clients/
+	char file[30];
 	strcpy(file, "Clients/");
 	strcpy(file + strlen(file), message + 2);
 	strcpy(file + strlen(file), ".txt");
-	printf("Fajll %s", file);
 	fptr = fopen(file,"r");
 	
+	//checks is receiver exists
 	if(fptr == NULL)
 	{
 		printf("Unable to open file\n");
@@ -126,7 +124,8 @@ void sendOpt(char* message, int receivedBytes, int socket)
 		send(socket, incorrect,sizeof(incorrect), 0); 
 	}else
 	{
-			fclose(fptr);//ovo uradim jer ako odmah otvorim fajl sa a, on ce ga napraviti ako ne postoji
+			fclose(fptr);
+			//I close file and then open it, because if I put "a" at the beginning of the function, it will create the file
 			fptr = fopen(file, "a");
 
 
@@ -134,7 +133,6 @@ void sendOpt(char* message, int receivedBytes, int socket)
 			int recByt;
 			recByt = recv(socket , msg , sizeof(msg) , 0);
 			msg[recByt] = 0;
-			printf("poruka %s", msg);
 			fprintf(fptr, msg);
 			fclose(fptr);
 
@@ -147,12 +145,13 @@ void sendOpt(char* message, int receivedBytes, int socket)
 void userCheck(char* message, int receivedBytes, int socket)
 {
 		FILE *fptr;
-		char* file = new char[receivedBytes + 12]; //8 za Clients/ i 4 za .txt
+		char file[30];
 		strcpy(file, "Clients/");
 		strcpy(file + strlen(file), message + 5);
 		strcpy(file + strlen(file), ".txt");
 
 		fptr = fopen(file, "r");
+		//if file exists, it means username is correct
 		if(fptr == NULL)
 		{
 			char* incorrect = "-";
@@ -168,19 +167,19 @@ void userCheck(char* message, int receivedBytes, int socket)
 			int recbyts;
 			char received[20];
 			
+			//receive password
 			recbyts = recv(socket , received , sizeof(received) , 0);
 			if (recbyts == 0)
 			{
 				printf("Disconnected from server!\n");
 			}else if (recbyts < 0) 
 			{
-				printf("Disconnected from server!\n");
 				DWORD err = WSAGetLastError();
 			}else
 			{
 
 				received[recbyts] = '\0';
-				printf("Primio %s \n", received);
+				printf("Received password: %s \n", received);
 
 				int bufferLength = 255;
 				char buffer[255];
@@ -188,13 +187,10 @@ void userCheck(char* message, int receivedBytes, int socket)
 				char* password = new char[recbyts-5];
 				strcpy(password, received + 5);
 
+				//read the password from the first line of a file
 				fgets(buffer, bufferLength, fptr);
 
-				printf("%s\n", buffer);
-				printf("%s\n", password);
-
-					//moram i duzinu porediti, jer da nisam poredio u slucaju kada bi mi korisnik uneo duzu sifru
-					//ali sa istim pocetkom, sve bi bilo ok
+				//comparing password from the file and the one which user sent, need to compare length, because
 				if(strncmp(buffer, password, strlen(buffer)-1) == 0 && ((strlen(buffer) - 1) == strlen(password)))
 				{
 					char* correct = "+";
@@ -212,22 +208,22 @@ void userCheck(char* message, int receivedBytes, int socket)
 
 void checkMessage(char* message, int receivedBytes, int socket)
 {
-			//za ove provere bih mogao jos jednu funkciju da napravim, da bude modularnije jer ce u suprtonom biti ogromna
+			
 		if(strncmp(message, "user", 4) == 0)
 		{
-			//ovo bih sve mogao u jednu funkciju
+			//checks whether user exists and password
 			userCheck(message,receivedBytes,socket);
 		}else if(strncmp(message, "1 ", 2) == 0)
 		{
-			//printf("Usao u 1");
+			//returns all the messages for the current user
 			checkOpt(message, receivedBytes, socket);
 		}else if(strncmp(message, "2 ", 2) == 0)
 		{
-			//printf("Usao u 2");
+			//returns the specific message selected by the user
 			rcvOpt(message, receivedBytes, socket);
 		}else if(strncmp(message, "3 ", 2) == 0)
 		{
-			//printf("Usao u 3");
+			//sends message to specific user
 			sendOpt(message, receivedBytes, socket);
 		}
 		return;
@@ -257,7 +253,8 @@ DWORD WINAPI socketThread(LPVOID arg)
 		}else
 		{
 			clientMessage[nReceivedBytes] = '\0';
-			printf("Primio %s \n", clientMessage);
+			printf("Received %s \n", clientMessage);
+
 			checkMessage(clientMessage, nReceivedBytes, socket);
 		}
 	}while(1);
