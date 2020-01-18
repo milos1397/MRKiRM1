@@ -11,7 +11,8 @@ void MainTests::setUp()
 {
     pSys = new FSMSystem(4, 4);
 
-    POP3ClientFSM = new ClAuto();
+    client = new ClAuto();
+	channel = new ChAuto();
 
    
     uint8 buffClassNo = 4;
@@ -24,23 +25,62 @@ void MainTests::setUp()
     LogAutomateNew::SetLogInterface(lf);	
 
    
-    pSys->Add(POP3ClientFSM, CL_AUTOMATE_TYPE_ID, 1, true);
-    //pSys->Add(pMF, TEST_AUTOMATE_TYPE_ID, 1, true);
+    pSys->Add(client, CL_AUTOMATE_TYPE_ID, 1, true);
+    pSys->Add(channel, CH_AUTOMATE_TYPE_ID, 1, true);
 }
 
 void MainTests::tearDown()
 {
 }
 
-void MainTests::UserTest()
+void MainTests::AcceptTest()
 {
-	/*pMF->FSM_User_Connecting_User_Connected();
+	client->FSMConnectionAccept();
 
-	POP3ClientFSM->FSM_Cl_Connecting_Cl_Connectiong_Accept();
+	msg = client->GetMsg(CL_AUTOMATE_MBX_ID);
+	msgcode = client->GetState();
+	client->Process(msg);//posalji sebi usercheck
 
-	msg = POP3ClientFSM->GetMsg(CL_AUTOMATE_MBX_ID);
-	POP3ClientFSM->Process(msg);
 
-	msgcode = POP3ClientFSM->GetState();
-	CPPUNIT_ASSERT_EQUAL((uint16)FSM_Cl_User_Check, msgcode);*/
+	msgcode = client->GetState();
+	CPPUNIT_ASSERT_EQUAL((uint16)FSM_Cl_User_Check, msgcode);
+}
+
+void MainTests::RejectTest()
+{
+	client->FSMConnectionReject();
+
+	msg = client->GetMsg(CL_AUTOMATE_MBX_ID);
+	msgcode = client->GetState();
+	client->Process(msg);
+
+
+	msgcode = client->GetState();
+	CPPUNIT_ASSERT_EQUAL((uint16)FSM_Cl_Connecting, msgcode);
+}
+
+void MainTests::CorrectPassword()
+{
+	client->TestCorrPass();
+
+	msg = client->GetMsg(CL_AUTOMATE_MBX_ID);
+	msgcode = client->GetState();
+	client->Process(msg);
+
+
+	msgcode = client->GetState();
+	CPPUNIT_ASSERT_EQUAL((uint16)FSM_Cl_Options, msgcode);
+}
+
+void MainTests::IncorrectPassword()
+{
+	client->TestIncorrPass();
+
+	msg = client->GetMsg(CL_AUTOMATE_MBX_ID);
+	msgcode = client->GetState();
+	client->Process(msg);
+
+
+	msgcode = client->GetState();
+	CPPUNIT_ASSERT((uint16)FSM_Cl_Authorising == msgcode);
 }

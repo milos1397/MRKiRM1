@@ -35,9 +35,11 @@ public:
 	void FSMPassCheck();
 	void FSMOptionsShow();
 	void FSMReceive();
-	//void FSM_Cl_Server_Disc();
 
+	void TestCorrPass();
+	void TestIncorrPass();
 	void Start();
+
 
 protected:
 	char userName[20];

@@ -92,6 +92,11 @@ void ClAuto::FSMConnectionReject()
 	cout<<"Can not connect to the server!"<<endl;
 
 	SetState(FSM_Cl_Ready);
+
+	PrepareNewMessage(0x00, MSG_User_Check_Mail);
+	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+	SetMsgObjectNumberTo(0);
+	SendMessage(CL_AUTOMATE_MBX_ID);
 }
 
 void ClAuto::FSMConnectionAccept()
@@ -401,5 +406,35 @@ void ClAuto::Start()
 	PrepareNewMessage(0x00, MSG_User_Check_Mail);
 	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
 	SetMsgObjectNumberTo(0);
+	SendMessage(CL_AUTOMATE_MBX_ID);
+}
+
+void ClAuto::TestCorrPass()
+{
+	SetState(FSM_Cl_Pass_Check);
+
+	char data[3];
+	data[0] = '+';
+
+
+	PrepareNewMessage(0x00, MSG_MSG);
+	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+	SetMsgObjectNumberTo(0);
+	AddParam(PARAM_DATA, 3, (uint8 *)data);
+	SendMessage(CL_AUTOMATE_MBX_ID);
+}
+
+void ClAuto::TestIncorrPass()
+{
+	SetState(FSM_Cl_Pass_Check);
+
+	char data[3];
+	data[0] = '-';
+
+
+	PrepareNewMessage(0x00, MSG_MSG);
+	SetMsgToAutomate(CL_AUTOMATE_TYPE_ID);
+	SetMsgObjectNumberTo(0);
+	AddParam(PARAM_DATA, 3, (uint8 *)data);
 	SendMessage(CL_AUTOMATE_MBX_ID);
 }

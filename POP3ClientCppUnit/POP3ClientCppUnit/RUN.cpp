@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     printf("\n");
     printf("**********************************************************************");
     printf("\n\n\n");
-#if 0
+//#if 0
     /* Create the event manager and test controller. */
     CPPUNIT_NS::TestResult controller;
 
@@ -44,6 +44,6 @@ int main(int argc, char* argv[])
 
     _getch();
     return result.wasSuccessful() ? 0 : 1;
-#endif
+//#endif
 #endif
 }
