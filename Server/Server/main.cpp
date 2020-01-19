@@ -8,7 +8,13 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-void checkOpt(char* message, int receivedBytes, int socket)
+struct thread_data
+{
+	SOCKET socket;
+	int id;
+} ;
+
+void checkOpt(char* message, int receivedBytes, int socket, int id)
 {
 	FILE *fptr;
 	char file[30];
@@ -19,7 +25,7 @@ void checkOpt(char* message, int receivedBytes, int socket)
 	
 	if(fptr == NULL)
 	{
-		printf("Unable to open file\n");
+		printf("Unable to open file, client - %d\n", id);
 	}else
 	{
 		int bufferLength = 255;
@@ -32,7 +38,7 @@ void checkOpt(char* message, int receivedBytes, int socket)
 		{
 			if(buffer[0] != '\n')
 			{
-				printf("%s", buffer);
+				printf("Check from %d, sending %s", id, buffer);
 				send(socket, buffer,strlen(buffer), 0);
 				Sleep(100); //da bi mogao odvojeno da posalje, odnosno da bi na prijemu se regularno primilo
 			}
@@ -46,7 +52,7 @@ void checkOpt(char* message, int receivedBytes, int socket)
 	}
 }
 
-void rcvOpt(char* message, int receivedBytes, int socket)
+void rcvOpt(char* message, int receivedBytes, int socket, int id)
 {
 	//number of message client wants to receive == line number in the file
 	char lineNumb[3];
@@ -72,15 +78,10 @@ void rcvOpt(char* message, int receivedBytes, int socket)
 
 	if(fptr==NULL)
 	{
-		printf("Unable to open file\n");
+		printf("Unable to open file - client %d\n", id);
 	}else
 	{
 		char buffer[255];
-		if(buffer == NULL){
-			printf("nl");
-		}
-
-		printf("Line number %d ", result);
 
 		int count = 1;
 		fgets(buffer, 255, fptr);
@@ -101,13 +102,13 @@ void rcvOpt(char* message, int receivedBytes, int socket)
 			}
 			Sleep(100);
 		}
-		printf("\n Line which is being sent: %s", buffer);
+		printf("\n Line which is being sent: %s, client - %d", buffer, id);
 		send(socket, buffer, strlen(buffer), 0);
 		fclose(fptr);
 	}
 }
 
-void sendOpt(char* message, int receivedBytes, int socket)
+void sendOpt(char* message, int receivedBytes, int socket, int id)
 {
 	FILE* fptr;
 	char file[30];
@@ -119,7 +120,7 @@ void sendOpt(char* message, int receivedBytes, int socket)
 	//checks is receiver exists
 	if(fptr == NULL)
 	{
-		printf("Unable to open file\n");
+		printf("Unable to open file - client %d\n", id);
 		char incorrect[22] = "User does not exist!\n";
 		send(socket, incorrect,sizeof(incorrect), 0); 
 	}else
@@ -132,6 +133,7 @@ void sendOpt(char* message, int receivedBytes, int socket)
 			char msg[200];
 			int recByt;
 			recByt = recv(socket , msg , sizeof(msg) , 0);
+			printf(" Received message from client %d to send\n", id);
 			msg[recByt] = 0;
 			fprintf(fptr, msg);
 			fclose(fptr);
@@ -139,10 +141,9 @@ void sendOpt(char* message, int receivedBytes, int socket)
 			char correct[15] = "Message sent!\n";
 			send(socket, correct ,sizeof(correct), 0);
 	}
-	printf(" %s", message);
 }
 
-void userCheck(char* message, int receivedBytes, int socket)
+void userCheck(char* message, int receivedBytes, int socket, int id)
 {
 		FILE *fptr;
 		char file[30];
@@ -161,8 +162,8 @@ void userCheck(char* message, int receivedBytes, int socket)
 		{
 			char* correct = "+";
 			send(socket, correct,sizeof(correct), 0);
-			printf("SENT: %s\n",correct);
-			printf("Waiting for the password...\n");
+			printf("Username correct to the client %d\n", id);
+			printf("Waiting for the password from the client %d\n", id);
 			//wait for the password
 			int recbyts;
 			char received[20];
@@ -179,7 +180,7 @@ void userCheck(char* message, int receivedBytes, int socket)
 			{
 
 				received[recbyts] = '\0';
-				printf("Received password: %s \n", received);
+				printf("Received password from the client %d: %s \n", id, received);
 
 				int bufferLength = 255;
 				char buffer[255];
@@ -195,10 +196,12 @@ void userCheck(char* message, int receivedBytes, int socket)
 				{
 					char* correct = "+";
 					send(socket, correct,sizeof(correct), 0);
+					printf("Password correct - client %d\n", id);
 				}else
 				{
 					char* incorrect = "-";
 					send(socket, incorrect,sizeof(incorrect), 0);
+					printf("Password incorrect - client %d\n", id);
 				}
 			}
 			fclose(fptr);
@@ -206,25 +209,25 @@ void userCheck(char* message, int receivedBytes, int socket)
 	return;
 }
 
-void checkMessage(char* message, int receivedBytes, int socket)
+void checkMessage(char* message, int receivedBytes, int socket, int id)
 {
 			
 		if(strncmp(message, "user", 4) == 0)
 		{
 			//checks whether user exists and password
-			userCheck(message,receivedBytes,socket);
+			userCheck(message, receivedBytes, socket, id);
 		}else if(strncmp(message, "1 ", 2) == 0)
 		{
 			//returns all the messages for the current user
-			checkOpt(message, receivedBytes, socket);
+			checkOpt(message, receivedBytes, socket, id);
 		}else if(strncmp(message, "2 ", 2) == 0)
 		{
 			//returns the specific message selected by the user
-			rcvOpt(message, receivedBytes, socket);
+			rcvOpt(message, receivedBytes, socket, id);
 		}else if(strncmp(message, "3 ", 2) == 0)
 		{
 			//sends message to specific user
-			sendOpt(message, receivedBytes, socket);
+			sendOpt(message, receivedBytes, socket, id);
 		}
 		return;
 }
@@ -233,7 +236,9 @@ DWORD WINAPI socketThread(LPVOID arg)
 {
 	int nReceivedBytes;
 	char clientMessage[200];
-	int socket = *( (int*) arg);
+	struct thread_data td = *( (struct thread_data *)arg);
+	int socket = td.socket;
+	int id = td.id;
 	char *data = "ACK";
 
 	send(socket, data, sizeof(data), 0);
@@ -253,9 +258,9 @@ DWORD WINAPI socketThread(LPVOID arg)
 		}else
 		{
 			clientMessage[nReceivedBytes] = '\0';
-			printf("Received %s \n", clientMessage);
+			printf("Received %s \n from client %d \n", clientMessage, id);
 
-			checkMessage(clientMessage, nReceivedBytes, socket);
+			checkMessage(clientMessage, nReceivedBytes, socket, id);
 		}
 	}while(1);
 	return 0;	
@@ -309,11 +314,15 @@ int main(int argc , char *argv[])
 	
     DWORD tid[60];
     int i = 0;
+	struct thread_data td;
 	while( (newSocket = accept(s , (struct sockaddr *)&client, &c)) != INVALID_SOCKET )
 	{
+		i++;
 		puts("Connection accepted");
+		td.socket = newSocket;
+		td.id = i;
 		
-        if( CreateThread(NULL, 0, socketThread, (LPVOID)&newSocket, 0, &tid[i]) == NULL )
+        if( CreateThread(NULL, 0, socketThread, (LPVOID)&td, 0, &tid[i]) == NULL )
 			printf("Failed to create thread\n");
 	}
 	
