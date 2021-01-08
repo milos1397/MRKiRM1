@@ -8,6 +8,7 @@
 //  This file contains code for Client class used for receiving messages from net. 
 //  Is used by some automate extended from NetFSM
 // **************************************************************************
+//comment
 
 #include "NetFSM.h"
 #include "Client.h"
